@@ -23,7 +23,6 @@
 		h2 { color:#cc0000; margin-bottom:1.5rem; padding-bottom:0.5rem; border-bottom:2px solid #f0f0f0; }
 		h3 { margin-top:2rem; margin-bottom:1rem; }
 		footer { text-align:center; padding:2rem; background:#333; color:white; margin-top:3rem; }
-		
 		/* Timeline */
 		.timeline-container { margin:2rem 0; position:relative; }
 		.timeline { height:80px; position:relative; }
@@ -33,34 +32,24 @@
 		.timeline-marker.major { background:gold; width:20px; height:20px; top:30px; }
 		.timeline-label { position:absolute; top:55px; transform:translateX(-50%); text-align:center; font-size:0.9rem; }
 		.timeline-event { position:absolute; bottom:55px; transform:translateX(-50%); text-align:center; font-size:0.8rem; width:120px; color:#666; }
-		
 		/* Maps & 3D */
 		.map-container { position:relative; height:500px; border:1px solid #eee; margin-top:2rem; }
 		.sg-map { width:100%; height:100%; }
 		.map-controls { position:absolute; top:10px; right:10px; background:white; padding:10px; border-radius:4px; box-shadow:0 1px 5px rgba(0,0,0,0.2); }
 		.map3d-container { position:relative; height:600px; border:1px solid #eee; margin-top:2rem; overflow:hidden; }
-		
 		/* Charts */
 		.chart-container { height:400px; margin:2rem 0; position:relative; }
 		.chart-legend { display:flex; justify-content:center; flex-wrap:wrap; margin:1rem 0; }
 		.legend-item { display:flex; align-items:center; margin:0 1rem 0.5rem 0; }
 		.legend-color { width:16px; height:16px; margin-right:5px; border-radius:3px; }
-		
 		/* Controls */
 		.controls { background:#f4f4f4; padding:1rem; border-radius:6px; margin:1rem 0; }
 		.year-slider { width:100%; margin:1rem 0; }
 		.year-display { font-size:2rem; font-weight:bold; text-align:center; color:#cc0000; margin:0.5rem 0; }
-		
 		/* Tooltip */
 		.tooltip { position:absolute; background:rgba(255,255,255,0.9); border:1px solid #ddd; padding:10px; border-radius:4px; pointer-events:none; font-size:0.9rem; box-shadow:0 2px 5px rgba(0,0,0,0.1); z-index:10; max-width:200px; display:none; }
-		
-		/* Responsive adjustments */
-		@media (max-width: 768px) {
-		    nav { flex-direction:column; align-items:center; }
-		    nav a { margin:0.3rem 0; }
-		    section { padding:1rem; }
-		    .chart-container { height:300px; }
-		}
+		/* Responsive */
+		@media (max-width: 768px) { nav { flex-direction:column; align-items:center; } nav a { margin:0.3rem 0; } section { padding:1rem; } .chart-container { height:300px; } }
 	</style>
 </head>
 <body>
@@ -377,7 +366,7 @@
 		
 		// ======= Initialization =======
 		document.addEventListener('DOMContentLoaded', () => {
-		  // Create tooltip if it doesn't exist
+		 
 		  if (!document.getElementById('tooltip')) {
 		    const tooltip = document.createElement('div');
 		    tooltip.id = 'tooltip';
@@ -392,13 +381,19 @@
 		    document.body.appendChild(tooltip);
 		  }
 		
+		  
 		  initTimeline();
 		  initOverviewMap();
 		  initHDBChart();
 		  initPopulationPyramid();
 		  initPopulationMap();
 		  initLandUseMap();
+		
 		  
+		  loadHDBGeoJSON();
+		  setupEventListeners();
+		});
+		
 		 // This function should be called when THREE.js is available
 		function loadHDBData() {
 		  if (window.THREE) {
@@ -486,11 +481,6 @@
 		}
 		});
 		
-		// Initialize everything when document is ready
-		document.addEventListener('DOMContentLoaded', () => {
-		  loadHDBGeoJSON();
-		  setupEventListeners();
-		});
 		
 		// ======= Timeline =======
 		function initTimeline() {
@@ -807,30 +797,37 @@
 		
 		// ======= HDB 3D Map =======
 		function loadHDBGeoJSON() {
-		  if (typeof THREE === 'undefined') {
-		    console.error('Three.js not loaded, cannot init 3D visualization');
-		    return;
-		  }
-		
-		  d3.json('https://raw.githubusercontent.com/carionb/Local/main/HDB.geojson')
-		    .then(geojson => {
-		      hdbData3D = geojson.features.map(feat => {
-		        // compute centroid of the first ring
-		        const coords = feat.geometry.coordinates[0];
-		        let sumX = 0, sumY = 0;
-		        coords.forEach(pt => { sumX += pt[0]; sumY += pt[1]; });
-		        const cx = sumX / coords.length, cy = sumY / coords.length;
-		        return {
-		          x: cx,
-		          y: cy,
-		          floors: +feat.properties.HDB_with_2,  // floors from property
-		          year:   +feat.properties.HDB_with_3   // build year from property
-		        };
-		      });
-		      initHDB3D();  // initialize Three.js scene with real data
-		    })
-		    .catch(err => console.error('Failed to load HDB.geojson:', err));
-		}
+		            function loadHDBGeoJSON() {
+		      if (typeof THREE === 'undefined') {
+		        console.error('Three.js not loaded');
+		        return;
+		      }
+		      d3.json('https://raw.githubusercontent.com/carionb/Local/main/HDB.geojson')
+		        .then(geojson => {
+		          hdbData3D = geojson.features.map(feat => {
+		            let ring;
+		            if (feat.geometry.type === 'MultiPolygon') {
+		              ring = feat.geometry.coordinates[0][0];
+		            } else if (feat.geometry.type === 'Polygon') {
+		              ring = feat.geometry.coordinates[0];
+		            } else {
+		              return null;
+		            }
+		            let sumX = 0, sumY = 0;
+		            ring.forEach(pt => { sumX += pt[0]; sumY += pt[1]; });
+		            const cx = sumX / ring.length;
+		            const cy = sumY / ring.length;
+		            return {
+		              x: cx,
+		              y: cy,
+		              floors: +feat.properties.HDB_with_2,
+		              year:   +feat.properties.HDB_with_3
+		            };
+		          }).filter(d => d);
+		          initHDB3D();
+		        })
+		        .catch(err => console.error('load GeoJSON failed：', err));
+		    }
 		
 		// -----------------------------
 		// 2. Initialize the 3D scene
