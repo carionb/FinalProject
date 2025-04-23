@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SG60: Visualizing Singapore's 60 Years of Development</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans', 'Source Sans Pro', sans-serif;
+        }
+        
+        body {
+            background-color: #f9f7f3; /* Light cream background */
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(to right, #ed2939, #cc0000); /* Singapore red */
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        nav {
+            background-color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        nav a {
+            color: #333;
+            text-decoration: none;
+            margin: 0 1.5rem;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        nav a:hover {
+            background-color: #eee;
+        }
+        
+        section {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #cc0000; /* Singapore red */
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background: #333;
+            color: white;
+            margin-top: 3rem;
+        }
+        
+        /* Timeline styles */
+        .timeline-container {
+            margin: 2rem 0;
+            position: relative;
+        }
+        
+        .timeline {
+            height: 80px;
+            position: relative;
+        }
+        
+        .timeline-line {
+            height: 4px;
+            background-color: #ddd;
+            position: absolute;
+            top: 38px;
+            left: 0;
+            right: 0;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #cc0000;
+            border-radius: 50%;
+            top: 32px;
+            transform: translateX(-50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-marker:hover {
+            transform: translateX(-50%) scale(1.3);
+        }
+        
+        .timeline-marker.major {
+            background: gold;
+            width: 20px;
+            height: 20px;
+            top: 30px;
+        }
+        
+        .timeline-label {
+            position: absolute;
+            top: 55px;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .timeline-event {
+            position: absolute;
+            bottom: 55px;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 0.8rem;
+            width: 120px;
+            color: #666;
+        }
+        
+        /* Map styles */
+        .map-container {
+            position: relative;
+            height: 500px;
+            border: 1px solid #eee;
+            margin-top: 2rem;
+        }
+        
+        .sg-map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+        }
+        
+        /* 3D Map Container */
+        .map3d-container {
+            position: relative;
+            height: 600px;
+            border: 1px solid #eee;
+            margin-top: 2rem;
+            overflow: hidden;
+        }
+        
+        /* Chart common styles */
+        .chart-container {
+            height: 400px;
+            margin: 2rem 0;
+            position: relative;
+        }
+        
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 0 1rem 0.5rem 0;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+        
+        /* Control panel */
+        .controls {
+            background: #f4f4f4;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+        
+        .year-slider {
+            width: 100%;
+            margin: 1rem 0;
+        }
+        
+        .year-display {
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            color: #cc0000;
+            margin: 0.5rem 0;
+        }
+        
+        /* Population pyramid styles */
+        .population-pyramid {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .pyramid-male, .pyramid-female {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .pyramid-labels {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 0 10px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        /* Tooltip styles */
+        .tooltip {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            pointer-events: none;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10;
+            max-width: 200px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            nav a {
+                margin: 0.3rem 0;
+            }
+            
+            section {
+                padding: 1rem;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>SG60: Visualizing Singapore's 60 Years of Development</h1>
+        <div class="subtitle">Data storytelling from HDB public housing to population structure and land use</div>
+    </header>
+    
+    <nav>
+        <a href="#overview">Timeline Overview</a>
+        <a href="#hdb">HDB Development</a>
+        <a href="#hdb3d">HDB 3D Map</a>
+        <a href="#population">Population Structure</a>
+        <a href="#landuse">Land Evolution</a>
+    </nav>
+    
+    <!-- Overview section -->
+    <section id="overview">
+        <h2>60 Years of Development Overview</h2>
+        <p>Drag the timeline to explore Singapore's major development milestones from independence in 1965 to the present.</p>
+        
+        <div class="controls">
+            <input type="range" min="1965" max="2025" value="2025" step="5" class="year-slider" id="timeline-slider">
+            <div class="year-display" id="year-display">2025</div>
+        </div>
+        
+        <div class="timeline-container">
+            <div class="timeline" id="timeline">
+                <div class="timeline-line"></div>
+                <!-- Timeline points will be dynamically generated via JS -->
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div class="sg-map" id="overview-map"></div>
+            <div class="map-controls">
+                <button id="play-btn">Play Animation</button>
+            </div>
+        </div>
+    </section>
+    
+    <!-- HDB Development section -->
+    <section id="hdb">
+        <h2>HDB Public Housing Development</h2>
+        <p>Since the Housing Development Board (HDB) was established in 1960, public housing has gradually covered the entire island, witnessing Singapore's urbanization process.</p>
+        
+        <div class="controls">
+            <input type="range" min="1965" max="2025" value="2025" step="5" class="year-slider" id="hdb-slider">
+            <div class="year-display" id="hdb-year-display">2025</div>
+        </div>
+        
+        <div class="map-container">
+            <div class="sg-map" id="hdb-map"></div>
+        </div>
+        
+        <h3>Growth and Types of HDB Units</h3>
+        <div class="chart-container" id="hdb-units-chart"></div>
+        
+        <div class="chart-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FFCCCC;"></div>
+                <div>1-2 Room</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FFAA66;"></div>
+                <div>3 Room</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FF7733;"></div>
+                <div>4 Room</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #CC0000;"></div>
+                <div>5 Room/Executive</div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- HDB 3D Map section -->
+    <section id="hdb3d">
+        <h2>HDB 3D Map Visualization</h2>
+        <p>This interactive 3D map shows HDB blocks with heights based on the actual number of floors. Colors indicate construction periods, revealing Singapore's public housing development pattern over time.</p>
+        
+        <div class="controls">
+            <input type="range" min="1965" max="2025" value="2025" step="1" class="year-slider" id="hdb3d-slider">
+            <div class="year-display" id="hdb3d-year-display">2025</div>
+        </div>
+        
+        <div class="map3d-container">
+            <div id="hdb3d-map"></div>
+            <div class="map-controls">
+                <button id="rotate-btn">Toggle Rotation</button>
+                <button id="reset-camera-btn">Reset View</button>
+                <select id="color-scheme-select">
+                    <option value="year">Color by Year</option>
+                    <option value="height">Color by Height</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="chart-legend" id="hdb3d-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #1a9850;"></div>
+                <div>1960-1970</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #91cf60;"></div>
+                <div>1971-1980</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #d9ef8b;"></div>
+                <div>1981-1990</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #fee08b;"></div>
+                <div>1991-2000</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #fc8d59;"></div>
+                <div>2001-2010</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #d73027;"></div>
+                <div>2011-2025</div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Population Structure section -->
+    <section id="population">
+        <h2>Population Structure Evolution</h2>
+        <p>Changes in Singapore's population structure reflect the evolution of society, economy, and policies.</p>
+        
+        <div class="controls">
+            <input type="range" min="1965" max="2025" value="2025" step="5" class="year-slider" id="pop-slider">
+            <div class="year-display" id="pop-year-display">2025</div>
+        </div>
+        
+        <h3>Population Pyramid</h3>
+        <div class="chart-container" id="population-pyramid"></div>
+        
+        <h3>Population Distribution Map</h3>
+        <div class="controls">
+            <select id="pop-type-select">
+                <option value="total">Total Population</option>
+                <option value="elderly">65 Years and Above</option>
+                <option value="children">14 Years and Below</option>
+            </select>
+        </div>
+        <div class="map-container">
+            <div class="sg-map" id="population-map"></div>
+        </div>
+    </section>
+    
+    <!-- Land Evolution section -->
+    <section id="landuse">
+        <h2>Land Area and Usage Evolution</h2>
+        <p>Through land reclamation and redevelopment, Singapore continuously expands and optimizes its limited land resources.</p>
+        
+        <div class="controls">
+            <input type="range" min="1965" max="2025" value="2025" step="5" class="year-slider" id="land-slider">
+            <div class="year-display" id="land-year-display">2025</div>
+        </div>
+        
+        <div class="map-container">
+            <div class="sg-map" id="landuse-map"></div>
+        </div>
+        
+        <h3>Land Use Distribution</h3>
+        <div class="chart-container" id="landuse-chart"></div>
+        
+        <div class="chart-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #E63946;"></div>
+                <div>Residential</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9381FF;"></div>
+                <div>Industrial</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #457B9D;"></div>
+                <div>Commercial</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #2A9D8F;"></div>
+                <div>Green Space</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #6C757D;"></div>
+                <div>Public Facilities</div>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <p>Data Sources: Singapore Department of Statistics | Housing Development Board | Urban Redevelopment Authority</p>
+        <p>SG60 Data Visualization Project</p>
+        <p>Baorong Li & Ravi. Prudhvi Naga Sai Kumar</p>
+    </footer>
+    
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip" style="display: none;"></div>
+    
+    <script>
+        // ======= Mock Data =======
+        // Note: In a real project, data should be loaded from external files
+        
+        // Timeline major events data
+        const timelineEvents = [
+            { year: 1965, event: "Singapore Independence", major: true },
+            { year: 1970, event: "Family Planning Policy", major: false },
+            { year: 1975, event: "CPF Housing Scheme Established", major: false },
+            { year: 1980, event: "First New Town Completed", major: false },
+            { year: 1990, event: "First Concept Plan Released", major: true },
+            { year: 2000, event: "Major Land Reclamation Project", major: false },
+            { year: 2010, event: "Marina Bay Sands Opening", major: false },
+            { year: 2020, event: "Aging Population Planning", major: true },
+            { year: 2025, event: "SG60 60th Anniversary", major: true }
+        ];
+        
+        // HDB development data - units every five years
+        const hdbData = [
+            { year: 1965, units: { "1-2 Room": 20000, "3 Room": 10000, "4 Room": 5000, "5 Room/Executive": 1000 } },
+            { year: 1970, units: { "1-2 Room": 35000, "3 Room": 20000, "4 Room": 8000, "5 Room/Executive": 2000 } },
+            { year: 1975, units: { "1-2 Room": 50000, "3 Room": 40000, "4 Room": 15000, "5 Room/Executive": 5000 } },
+            { year: 1980, units: { "1-2 Room": 70000, "3 Room": 80000, "4 Room": 30000, "5 Room/Executive": 10000 } },
+            { year: 1985, units: { "1-2 Room": 85000, "3 Room": 120000, "4 Room": 60000, "5 Room/Executive": 20000 } },
+            { year: 1990, units: { "1-2 Room": 100000, "3 Room": 160000, "4 Room": 100000, "5 Room/Executive": 40000 } },
+            { year: 1995, units: { "1-2 Room": 110000, "3 Room": 200000, "4 Room": 150000, "5 Room/Executive": 70000 } },
+            { year: 2000, units: { "1-2 Room": 120000, "3 Room": 240000, "4 Room": 200000, "5 Room/Executive": 100000 } },
+            { year: 2005, units: { "1-2 Room": 125000, "3 Room": 270000, "4 Room": 250000, "5 Room/Executive": 120000 } },
+            { year: 2010, units: { "1-2 Room": 130000, "3 Room": 300000, "4 Room": 280000, "5 Room/Executive": 140000 } },
+            { year: 2015, units: { "1-2 Room": 135000, "3 Room": 320000, "4 Room": 310000, "5 Room/Executive": 160000 } },
+            { year: 2020, units: { "1-2 Room": 140000, "3 Room": 340000, "4 Room": 330000, "5 Room/Executive": 180000 } },
+            { year: 2025, units: { "1-2 Room": 145000, "3 Room": 350000, "4 Room": 350000, "5 Room/Executive": 200000 } }
+        ];
+        
+        // Population pyramid data - age structure every five years
+        const populationData = [
+            {
+                year: 1965,
+                structure: [
+                    { ageGroup: "0-4", male: 12, female: 11 },
+                    { ageGroup: "5-9", male: 11, female: 10 },
+                    { ageGroup: "10-14", male: 10, female: 9 },
+                    { ageGroup: "15-19", male: 9, female: 8 },
+                    { ageGroup: "20-24", male: 8, female: 7 },
+                    { ageGroup: "25-29", male: 7, female: 6 },
+                    { ageGroup: "30-34", male: 6, female: 5 },
+                    { ageGroup: "35-39", male: 5, female: 4 },
+                    { ageGroup: "40-44", male: 4, female: 3 },
+                    { ageGroup: "45-49", male: 3, female: 2 },
+                    { ageGroup: "50-54", male: 2, female: 1.5 },
+                    { ageGroup: "55-59", male: 1.5, female: 1 },
+                    { ageGroup: "60-64", male: 1, female: 0.8 },
+                    { ageGroup: "65-69", male: 0.7, female: 0.6 },
+                    { ageGroup: "70-74", male: 0.5, female: 0.4 },
+                    { ageGroup: "75-79", male: 0.3, female: 0.3 },
+                    { ageGroup: "80+", male: 0.2, female: 0.2 }
+                ]
+            },
+            {
+                year: 2025,
+                structure: [
+                    { ageGroup: "0-4", male: 5, female: 5 },
+                    { ageGroup: "5-9", male: 5.5, female: 5.5 },
+                    { ageGroup: "10-14", male: 6, female: 6 },
+                    { ageGroup: "15-19", male: 6.5, female: 6.5 },
+                    { ageGroup: "20-24", male: 7, female: 7 },
+                    { ageGroup: "25-29", male: 8, female: 8 },
+                    { ageGroup: "30-34", male: 9, female: 9 },
+                    { ageGroup: "35-39", male: 10, female: 10 },
+                    { ageGroup: "40-44", male: 9, female: 9 },
+                    { ageGroup: "45-49", male: 8, female: 8 },
+                    { ageGroup: "50-54", male: 7, female: 7 },
+                    { ageGroup: "55-59", male: 6, female: 6 },
+                    { ageGroup: "60-64", male: 5, female: 5.5 },
+                    { ageGroup: "65-69", male: 4, female: 4.5 },
+                    { ageGroup: "70-74", male: 3, female: 3.5 },
+                    { ageGroup: "75-79", male: 2, female: 2.5 },
+                    { ageGroup: "80+", male: 1.5, female: 2 }
+                ]
+            }
+        ];
+        
+        // Land use data - distribution every five years
+        const landUseData = [
+            {
+                year: 1965,
+                usage: { "Residential": 10, "Industrial": 10, "Commercial": 5, "Green Space": 50, "Public Facilities": 25 }
+            },
+            {
+                year: 1975,
+                usage: { "Residential": 15, "Industrial": 12, "Commercial": 6, "Green Space": 47, "Public Facilities": 20 }
+            },
+            {
+                year: 1985,
+                usage: { "Residential": 18, "Industrial": 15, "Commercial": 8, "Green Space": 44, "Public Facilities": 15 }
+            },
+            {
+                year: 1995,
+                usage: { "Residential": 20, "Industrial": 16, "Commercial": 10, "Green Space": 39, "Public Facilities": 15 }
+            },
+            {
+                year: 2005,
+                usage: { "Residential": 22, "Industrial": 17, "Commercial": 12, "Green Space": 35, "Public Facilities": 14 }
+            },
+            {
+                year: 2015,
+                usage: { "Residential": 24, "Industrial": 15, "Commercial": 15, "Green Space": 33, "Public Facilities": 13 }
+            },
+            {
+                year: 2025,
+                usage: { "Residential": 25, "Industrial": 14, "Commercial": 16, "Green Space": 32, "Public Facilities": 13 }
+            }
+        ];
+        
+        // Mock Singapore map data (simplified version)
+        // Real project should use GeoJSON/TopoJSON
+        const sgMapData = {
+            width: 400,
+            height: 300,
+            regions: [
+                { id: "central", name: "Central Region", x: 200, y: 150, r: 30 },
+                { id: "north", name: "North Region", x: 200, y: 80, r: 25 },
+                { id: "east", name: "East Region", x: 260, y: 150, r: 25 },
+                { id: "west", name: "West Region", x: 140, y: 150, r: 25 },
+                { id: "northeast", name: "Northeast Region", x: 230, y: 110, r: 20 }
+            ],
+            // Reclaimed land by year
+            reclaimed: [
+                { year: 1975, path: "M200,150 L220,140 L240,150 L220,160 Z" },
+                { year: 1985, path: "M260,150 L280,140 L290,160 L270,170 Z" },
+                { year: 1995, path: "M140,150 L120,140 L110,160 L130,170 Z" },
+                { year: 2005, path: "M200,210 L220,200 L240,210 L220,220 Z" },
+                { year: 2015, path: "M300,150 L320,140 L330,160 L310,170 Z" }
+            ]
+        };
+        
+        // ======= 3D HDB Variables =======
+        let scene, camera, renderer, controls;
+        let hdbBuildings = [];
+        let isRotating = false;
+        let hdbData3D = [];
+        let colorScheme = 'year';
+        
+        // ======= Initialization =======
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up tooltip
+            const tooltip = d3.select("#tooltip");
+            
+            // Initialize timeline
+            initTimeline();
+            
+            // Initialize charts
+            initOverviewMap();
+            initHDBChart();
+            initPopulationPyramid();
+            initPopulationMap();
+            initLandUseMap();
+            initLandUseChart();
+            
+            // Load HDB GeoJSON data and initialize 3D map
+            loadHDBGeoJSON();
+            
+            // Set year slider event listeners
+            document.querySelectorAll('.year-slider').forEach(slider => {
+                slider.addEventListener('input', function() {
+                    const yearDisplay = document.getElementById(this.id.replace('slider', 'year-display'));
+                    yearDisplay.textContent = this.value;
+                    
+                    // Update specific visualization based on slider ID
+                    if (this.id === 'hdb3d-slider') {
+                        updateHDB3DMap(parseInt(this.value));
+                    } else {
+                        updateAllVisualizationsByYear(parseInt(this.value));
+                    }
+                });
+            });
+            
+            // Play button event
+            document.getElementById('play-btn').addEventListener('click', function() {
+                playTimelineAnimation();
+            });
+            
+            // HDB 3D specific controls
+            document.getElementById('rotate-btn').addEventListener('click', function() {
+                isRotating = !isRotating;
+                this.textContent = isRotating ? 'Stop Rotation' : 'Start Rotation';
+            });
+            
+            document.getElementById('reset-camera-btn').addEventListener('click', function() {
+                resetCamera();
+            });
+            
+            document.getElementById('color-scheme-select').addEventListener('change', function() {
+                colorScheme = this.value;
+                updateHDB3DMap(parseInt(document.getElementById('hdb3d-slider').value));
+                updateHDB3DLegend(colorScheme);
+            });
+            
+            // Population type selector event
+            document.getElementById('pop-type-select').addEventListener('change', function() {
+                updatePopulationMap(parseInt(document.getElementById('pop-slider').value), this.value);
+            });
+        });
+        
+        // ======= Function Definitions =======
+        
+        // Initialize timeline
+        function initTimeline() {
+            const timeline = d3.select("#timeline");
+            const width = timeline.node().getBoundingClientRect().width;
+            
+            // Create time scale
+            const timeScale = d3.scaleLinear()
+                .domain([1965, 2025])
+                .range([50, width - 50]);
