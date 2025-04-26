@@ -3,1468 +3,1037 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>SG60: Visualizing Singapore's 60 Years of Development</title>
-	<!-- D3, TopoJSON, Three.js, OrbitControls -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+	<title>SG60 Framework</title>
+	<!-- Tailwind CSS -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+	<!-- D3.js -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" defer></script>
+	<!-- Font Awesome -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<!-- MapLibre for 3D Map -->
+	<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css" />
+	<script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+	<!-- Chart.js — load *before* your code, no defer -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 	<style>
-		/* Base styles */
-		* { margin:0; padding:0; box-sizing:border-box; font-family:'Noto Sans','Source Sans Pro',sans-serif; }
-		body { background-color:#f9f7f3; color:#333; line-height:1.6; }
-		header { background:linear-gradient(to right,#ed2939,#cc0000); color:white; text-align:center; padding:2rem 0; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-		h1 { font-size:2.2rem; margin-bottom:0.5rem; }
-		.subtitle { font-size:1.2rem; opacity:0.9; }
-		nav { background-color:#fff; position:sticky; top:0; z-index:100; display:flex; justify-content:center; padding:1rem 0; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-		nav a { color:#333; text-decoration:none; margin:0 1.5rem; font-weight:bold; padding:0.5rem 1rem; border-radius:4px; transition:all 0.3s ease; }
-		nav a:hover { background-color:#eee; }
-		section { max-width:1200px; margin:3rem auto; padding:2rem; background:white; border-radius:8px; box-shadow:0 2px 15px rgba(0,0,0,0.1); }
-		h2 { color:#cc0000; margin-bottom:1.5rem; padding-bottom:0.5rem; border-bottom:2px solid #f0f0f0; }
-		h3 { margin-top:2rem; margin-bottom:1rem; }
-		footer { text-align:center; padding:2rem; background:#333; color:white; margin-top:3rem; }
+		/* Reset and basic */
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		html, body { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+		body { background: #f9f9f9; color: #333; }
 		
-		/* Timeline */
-		.timeline-container { margin:2rem 0; position:relative; }
-		.timeline { height:80px; position:relative; }
-		.timeline-line { height:4px; background-color:#ddd; position:absolute; top:38px; left:0; right:0; }
-		.timeline-marker { position:absolute; width:16px; height:16px; background:#cc0000; border-radius:50%; top:32px; transform:translateX(-50%); cursor:pointer; transition:all 0.3s ease; }
-		.timeline-marker:hover { transform:translateX(-50%) scale(1.3); }
-		.timeline-marker.major { background:gold; width:20px; height:20px; top:30px; }
-		.timeline-label { position:absolute; top:55px; transform:translateX(-50%); text-align:center; font-size:0.9rem; }
-		.timeline-event { position:absolute; bottom:55px; transform:translateX(-50%); text-align:center; font-size:0.8rem; width:120px; color:#666; }
-		
-		/* Maps & 3D */
-		.map-container { position:relative; height:500px; border:1px solid #eee; margin-top:2rem; }
-		.sg-map { width:100%; height:100%; }
-		.map-controls { position:absolute; top:10px; right:10px; background:white; padding:10px; border-radius:4px; box-shadow:0 1px 5px rgba(0,0,0,0.2); }
-		.map3d-container { position:relative; height:600px; border:1px solid #eee; margin-top:2rem; overflow:hidden; }
-		
-		
-		/* Charts */
-		.chart-container { height:400px; margin:2rem 0; position:relative; }
-		.chart-legend { display:flex; justify-content:center; flex-wrap:wrap; margin:1rem 0; }
-		.legend-item { display:flex; align-items:center; margin:0 1rem 0.5rem 0; }
-		.legend-color { width:16px; height:16px; margin-right:5px; border-radius:3px; }
-		
-		/* Controls */
-		.controls { background:#f4f4f4; padding:1rem; border-radius:6px; margin:1rem 0; }
-		.year-slider { width:100%; margin:1rem 0; }
-		.year-display { font-size:2rem; font-weight:bold; text-align:center; color:#cc0000; margin:0.5rem 0; }
-		
-		/* Tooltip */
-		.tooltip { position:absolute; background:rgba(255,255,255,0.9); border:1px solid #ddd; padding:10px; border-radius:4px; pointer-events:none; font-size:0.9rem; box-shadow:0 2px 5px rgba(0,0,0,0.1); z-index:10; max-width:200px; display:none; }
-		
-		/* Responsive adjustments */
-		@media (max-width: 768px) {
-		    nav { flex-direction:column; align-items:center; }
-		    nav a { margin:0.3rem 0; }
-		    section { padding:1rem; }
-		    .chart-container { height:300px; }
+		/* Navigation styling */
+		nav {
+		  background: white;
+		  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+		  width: 100%;
+		  z-index: 1000;
 		}
+		
+		.nav-fixed {
+		  position: fixed;
+		  top: 0;
+		}
+		
+		.nav-item { 
+		  cursor: pointer; 
+		  padding: 0.75rem 1.25rem;
+		  transition: all 0.3s ease;
+		  position: relative;
+		  font-weight: 500;
+		}
+		
+		.nav-item:hover {
+		  color: #e53e3e;
+		}
+		
+		.nav-item.active { 
+		  color: #e53e3e; 
+		  font-weight: 600; 
+		}
+		
+		.nav-item.active:after {
+		  content: '';
+		  position: absolute;
+		  bottom: 0;
+		  left: 0;
+		  width: 100%;
+		  height: 3px;
+		  background-color: #e53e3e;
+		}
+		
+		/* Content area padding */
+		.content-padding {
+		  padding-top: 60px;
+		}
+		
+		/* Section styling */
+		section { 
+		  scroll-margin-top: 70px;
+		  padding: 2rem;
+		  background: white;
+		  border-radius: 8px;
+		  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+		  margin-bottom: 2rem;
+		}
+		
+		/* Module placeholder styling */
+		.module-placeholder {
+		  border: 2px dashed #cbd5e0;
+		  border-radius: 6px;
+		  padding: 2rem;
+		  text-align: center;
+		  background-color: #f7fafc;
+		}
+		
+		/* Header animation */
+		@keyframes gradientAnimation {
+		  0% {background-position: 0% 50%}
+		  50% {background-position: 100% 50%}
+		  100% {background-position: 0% 50%}
+		}
+		
+		.animated-header {
+		  background: linear-gradient(90deg, #c53030, #e53e3e, #f56565);
+		  background-size: 200% 200%;
+		  animation: gradientAnimation 8s ease infinite;
+		}
+		
+		/* Hover effects */
+		.hover-effect:hover {
+		  transform: translateY(-3px);
+		  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+		}
+		
+		/* Data source cards */
+		.data-source-card {
+		  background-color: rgba(255, 255, 255, 0.1);
+		  border-radius: 6px;
+		  padding: 1rem;
+		  transition: all 0.3s ease;
+		}
+		
+		.data-source-card:hover {
+		  background-color: rgba(255, 255, 255, 0.15);
+		  transform: translateY(-2px);
+		}
+		
+		.data-source-link {
+		  color: #f0b3b3;
+		  text-decoration: none;
+		  transition: color 0.2s ease;
+		}
+		
+		.data-source-link:hover {
+		  color: #ffffff;
+		  text-decoration: underline;
+		}
+		
+		/* 3D Map Styles */
+		#map {
+		  height: 500px;
+		  width: 100%;
+		  position: relative;
+		  z-index: 1;
+		}
+		
+		/* Control Panel */
+		.control-panel {
+		  position: absolute;
+		  top: 20px;
+		  left: 20px;
+		  background: rgba(255,255,255,0.9);
+		  padding: 16px;
+		  border-radius: 12px;
+		  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+		  z-index: 2;
+		  min-width: 260px;
+		}
+		
+		.control-group {
+		  margin-bottom: 16px;
+		}
+		
+		.control-label {
+		  display: block;
+		  margin-bottom: 8px;
+		  font-size: 15px;
+		  color: #444;
+		  font-weight: 600;
+		}
+		
+		.slider {
+		  width: 100%;
+		}
+		
+		.value-display {
+		  float: right;
+		  font-weight: 500;
+		  color: #333;
+		}
+		
+		/* Remote-Style Controls */
+		.remote-controls {
+		  display: grid;
+		  grid-template:
+		    "up    up    up"      40px
+		    "left reset right"    40px
+		    "down  down  down"    40px
+		    / 60px  60px  60px;
+		  gap: 8px;
+		  justify-items: center;
+		}
+		
+		.remote-controls button {
+		  border: none;
+		  border-radius: 8px;
+		  background: linear-gradient(135deg,#4a90e2,#357abd);
+		  cursor: pointer;
+		  width: 100%;
+		  height: 100%;
+		  display: flex;
+		  align-items: center;
+		  justify-content: center;
+		  transition: background .2s,transform .2s;
+		}
+		
+		.remote-controls button:hover {
+		  background: linear-gradient(135deg,#357abd,#2a5a8f);
+		  transform: scale(1.1);
+		}
+		
+		#tilt-up     { grid-area: up; }
+		#reset-view  { grid-area: reset; }
+		#tilt-down   { grid-area: down; }
+		#rotate-left { grid-area: left; }
+		#rotate-right{ grid-area: right; }
+		
+		.remote-controls svg {
+		  width: 16px;
+		  height: 16px;
+		  fill: rgba(255,255,255,0.9);
+		}
+		
+		/* Legend */
+		.legend {
+		  position: absolute;
+		  bottom: 30px;
+		  left: 20px;
+		  background: rgba(255,255,255,0.9);
+		  padding: 12px;
+		  border-radius: 8px;
+		  font-size: 13px;
+		  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+		  z-index: 2;
+		}
+		
+		.legend-item {
+		  display: flex;
+		  align-items: center;
+		  margin-bottom: 6px;
+		}
+		
+		.legend-color {
+		  width: 16px;
+		  height: 16px;
+		  margin-right: 8px;
+		  border-radius: 3px;
+		}
+		
+		 /* info panel */
+		  .building-info-panel {
+		margin-top: 16px;
+		padding-top: 16px;
+		border-top: 1px solid #e2e8f0;
+		  }
+		
+		  .building-info-content {
+		background: #f8fafc;
+		border-radius: 6px;
+		padding: 12px;
+		border: 1px solid #e2e8f0;
+		font-size: 13px;
+		min-height: 100px;
+		  }
+		
+		  .building-info-row {
+		display: flex;
+		margin-bottom: 6px;
+		  }
+		
+		  .building-info-label {
+		font-weight: 500;
+		width: 60px;
+		color: #4a5568;
+		  }
+		
+		  .building-info-value {
+		flex-grow: 1;
+		color: #1a202c;
+		  }
+		
+		  .no-building-selected {
+		color: #718096;
+		font-style: italic;
+		text-align: center;
+		padding: 8px 0;
+		  }
+		
 	</style>
 </head>
-<body>
-	<header>
-		<h1>SG60: Visualizing Singapore's 60 Years of Development</h1>
-		<div class="subtitle">Data storytelling from HDB public housing to population structure and land use</div>
+<body class="flex flex-col min-h-screen">
+	<!-- HEADER -->
+	<header class="animated-header text-white py-8 text-center">
+		<div class="container mx-auto px-4">
+			<h1 class="text-4xl font-bold mb-2">SG60: Visualizing Singapore's Development</h1>
+			<p class="text-xl">Exploring Singapore's remarkable transformation since 1965</p>
+		</div>
 	</header>
-	<nav>
-		<a href="#overview">Timeline Overview</a>
-		<a href="#hdb">HDB Development</a>
-		<a href="#hdb3d">HDB 3D Map</a>
-		<a href="#population">Population Structure</a>
-		<a href="#landuse">Land Evolution</a>
+	<!-- NAVIGATION -->
+	<nav id="main-nav">
+		<div class="container mx-auto">
+			<ul class="flex justify-center space-x-2 md:space-x-8">
+				<li><a href="#overview" class="nav-item active flex items-center"><i class="fas fa-home mr-2"></i> Overview</a></li>
+				<li><a href="#housing" class="nav-item flex items-center"><i class="fas fa-building mr-2"></i> Housing</a></li>
+				<li><a href="#map3d" class="nav-item flex items-center"><i class="fas fa-map-marked-alt mr-2"></i> 3D Map</a></li>
+				<li><a href="#population" class="nav-item flex items-center"><i class="fas fa-users mr-2"></i> Population</a></li>
+			</ul>
+		</div>
 	</nav>
-	<!-- Overview section -->
-	<section id="overview">
-		<h2>60 Years of Development Overview</h2>
-		<p>Drag the timeline to explore Singapore's major development milestones from independence in 1965 to the present.</p>
-		<div class="controls">
-			<input type="range" min="1965" max="2025" value="2025" step="5" class="year-slider" id="timeline-slider">
-			<div class="year-display" id="year-display">2025</div>
-		</div>
-		<div class="timeline-container">
-			<div class="timeline" id="timeline">
-				<div class="timeline-line"></div>
+	<!-- MAIN CONTENT -->
+	<main id="main-content" class="flex-grow container mx-auto py-8 px-4">
+		<div class="max-w-5xl mx-auto space-y-12">
+			<!-- Overview -->
+			<section id="overview" class="transition-all duration-300 hover-effect">
+				<h2 class="text-2xl font-bold mb-6 text-red-600 border-b pb-2">Overview</h2>
+				<div class="module-placeholder">
+					<h3 class="text-xl font-medium text-gray-700 mb-4">Overview Module</h3>
+					<p class="text-gray-600 mb-2">Paste your Overview module code here.</p>
+					<p class="text-sm text-gray-500">Replace this placeholder with your content.</p>
+				</div>
+			</section>
+			<!-- Housing Development -->
+			<section id="housing" class="transition-all duration-300 hover-effect">
+				<h2 class="text-2xl font-bold mb-6 text-red-600 border-b pb-2">Housing Development</h2>
+				<div class="module-placeholder">
+					<h3 class="text-xl font-medium text-gray-700 mb-4">Housing Development Module</h3>
+					<p class="text-gray-600 mb-2">Paste your Housing Development module code here.</p>
+					<p class="text-sm text-gray-500">Replace this placeholder with your content including charts, graphs, and analysis.</p>
+				</div>
+			</section>
+			<!-- 3D Housing Map -->
+			<section id="map3d" class="transition-all duration-300 hover-effect">
+				<h2 class="text-2xl font-bold mb-6 text-red-600 border-b pb-2">3D Housing Map</h2>
+				<p class="mb-4">Explore Singapore's HDB buildings in an interactive 3D view. Use the controls to navigate and filter by construction year.</p>
+				<div class="relative" style="height: 600px;">
+					<!-- Map Container -->
+					<div id="map-container" class="relative" style="height: 600px;">
+						<div id="map" style="height: 100%; width: 100%;"></div>
+						<!-- Control Panel -->
+						<div class="control-panel">
+							<div class="control-group">
+								<label class="control-label"> Year Filter <span id="year-value" class="value-display"></span>
+								</label>
+								<input type="range" id="year-slider" class="slider" />
+							</div>
+							<div class="control-group">
+								<div class="control-label">3D Remote Controls</div>
+								<div class="remote-controls">
+									<button id="tilt-up" title="Tilt Up">
+										<svg viewBox="0 0 24 24">
+											<path d="M12 4l-8 8h16z" />
+										</svg>
+									</button>
+									<button id="rotate-left" title="Rotate Left">
+										<svg viewBox="0 0 24 24" style="transform:rotate(-90deg)">
+											<path d="M12 4l-8 8h16z" />
+										</svg>
+									</button>
+									<button id="reset-view" title="Reset View">
+										<svg viewBox="0 0 24 24">
+											<path d="M12 4V1L8 5l4 4V6c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6h-2c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z" />
+										</svg>
+									</button>
+									<button id="rotate-right" title="Rotate Right">
+										<svg viewBox="0 0 24 24" style="transform:rotate(90deg)">
+											<path d="M12 4l-8 8h16z" />
+										</svg>
+									</button>
+									<button id="tilt-down" title="Tilt Down">
+										<svg viewBox="0 0 24 24" style="transform:rotate(180deg)">
+											<path d="M12 4l-8 8h16z" />
+										</svg>
+									</button>
+								</div>
+							</div>
+							<div class="building-info-panel">
+								<h3><i class="fas fa-info-circle"></i> Building Information</h3>
+								<div id="building-info" class="building-info-content">
+									<div class="no-building-selected"> Hover over a building to see details </div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- Legend -->
+					<div class="legend">
+						<div class="legend-item">
+							<div class="legend-color" style="background:#cccccc"></div>Buildings
+						</div>
+						<div class="legend-item">
+							<div class="legend-color" style="background:#ffeb3b"></div>Hover Highlight
+						</div>
+					</div>
+				</div>
+			</section>
+			<!-- Population -->
+			<section id="population" class="bg-white p-8 rounded shadow">
+				<h2 class="text-2xl font-semibold text-red-600 mb-6 text-center">Population Dashboard</h2>
+				<!-- Controls -->
+				<div class="flex flex-wrap justify-between items-center mb-6">
+					<div class="flex items-center space-x-2">
+						<label class="font-medium">From:</label>
+						<select id="startYear" class="border px-2 py-1 rounded"></select>
+						<label class="font-medium">To:</label>
+						<select id="endYear" class="border px-2 py-1 rounded"></select>
+						<button id="updateBtn" class="ml-4 bg-red-600 text-white px-4 py-1 rounded">Update</button>
+					</div>
+				</div>
+				<!-- Trend chart -->
+				<div class="bg-gray-50 p-4 rounded shadow mb-6">
+					<h3 class="text-lg font-semibold mb-2">Population Trend</h3>
+					<div class="w-full max-w-3xl mx-auto mb-6">
+						<canvas id="populationTrendChart" class="w-full h-64"></canvas>
+					</div>
+					<!-- KPI cards -->
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+						<div class="bg-gray-50 p-4 rounded shadow">
+							<h3 class="text-lg font-semibold mb-2">Total Population</h3>
+							<div id="currentPopulation" class="text-2xl font-bold text-red-600">–</div>
+							<div id="populationChange" class="mt-1 text-sm">–</div>
+						</div>
+						<div class="bg-gray-50 p-4 rounded shadow">
+							<h3 class="text-lg font-semibold mb-2">Median Age</h3>
+							<div id="currentMedianAge" class="text-2xl font-bold text-red-600">–</div>
+							<div id="medianAgeChange" class="mt-1 text-sm">–</div>
+						</div>
+						<div class="bg-gray-50 p-4 rounded shadow">
+							<h3 class="text-lg font-semibold mb-2">Support Ratio</h3>
+							<div id="currentSupportRatio" class="text-2xl font-bold text-red-600">–</div>
+							<div id="supportRatioChange" class="mt-1 text-sm">–</div>
+						</div>
+					</div>
+					<!-- Composition pie -->
+					<div>
+						<label>
+							<input type="checkbox" id="toggleComposition" checked> Show Population Composition </label>
+					</div>
+					<!-- Container for composition charts -->
+					<div id="compositionContainer" style="display: block;">
+						<div style="display: flex; justify-content: space-around; width: 100%; margin-top: 20px;">
+							<!-- Left chart (Start Year) -->
+							<div style="width: 45%;">
+								<h3 id="startYearTitle" style="text-align: center;">Population Composition</h3>
+								<div style="height: 300px; position: relative;">
+									<canvas id="startYearChart"></canvas>
+								</div>
+							</div>
+							<!-- Right chart (End Year) -->
+							<div style="width: 45%;">
+								<h3 id="endYearTitle" style="text-align: center;">Population Composition</h3>
+								<div style="height: 300px; position: relative;">
+									<canvas id="endYearChart"></canvas>
+								</div>
+							</div>
+						</div>
+					</div>
+	</main>
+	<!-- FOOTER -->
+	<footer class="bg-gray-800 text-white py-8">
+		<div class="container mx-auto px-4">
+			<div class="mb-6 text-center">
+				<h3 class="text-xl font-bold mb-2">SG60: Singapore's Development Journey</h3>
+				<p class="text-gray-400">Exploring 60 years of transformation through data visualization</p>
+			</div>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-6">
+				<div class="data-source-card">
+					<h4 class="text-lg font-semibold flex items-center mb-2">
+						<i class="fas fa-map-location-dot mr-2 text-red-300"></i> Geographic Data
+					</h4>
+					<p class="text-sm text-gray-300 mb-2"><span class="font-medium">Source:</span> URA (Urban Redevelopment Authority)</p>
+					<p class="text-sm text-gray-300 mb-2"><span class="font-medium">Dataset:</span> Master Plan 2019 Region Boundary (No Sea) (GEOJSON)</p>
+					<a href="https://data.gov.sg/datasets?query=boudary&resultId=d_bf4d24df9129d5a8ff8cf82e20959ee0&page=1" class="data-source-link text-sm flex items-center">
+						<i class="fas fa-external-link-alt mr-1"></i> View on data.gov.sg </a>
+				</div>
+				<div class="data-source-card">
+					<h4 class="text-lg font-semibold flex items-center mb-2">
+						<i class="fas fa-users mr-2 text-blue-300"></i> Population Data
+					</h4>
+					<p class="text-sm text-gray-300 mb-2"><span class="font-medium">Source:</span> SINGSTAT (Singapore Department of Statistics)</p>
+					<p class="text-sm text-gray-300 mb-2"><span class="font-medium">Dataset:</span> Indicators On Population, Annual</p>
+					<a href="https://data.gov.sg/datasets?query=Indicators+On+Population&resultId=d_3d227e5d9fdec73f3bcadce671c333a6&page=1" class="data-source-link text-sm flex items-center">
+						<i class="fas fa-external-link-alt mr-1"></i> View on data.gov.sg </a>
+				</div>
+				<div class="data-source-card">
+					<h4 class="text-lg font-semibold flex items-center mb-2">
+						<i class="fas fa-building mr-2 text-green-300"></i> Housing Data (Property)
+					</h4>
+					<p class="text-sm text-gray-300 mb-2"><span class="font-medium">Source:</span> HDB (Housing & Development Board)</p>
+					<p class="text-sm text-gray-300 mb-2"><span class="font-medium">Dataset:</span> HDB Property Information</p>
+					<a href="https://data.gov.sg/datasets?query=HDB&page=1&resultId=d_17f5382f26140b1fdae0ba2ef6239d2f" class="data-source-link text-sm flex items-center">
+						<i class="fas fa-external-link-alt mr-1"></i> View on data.gov.sg </a>
+				</div>
+				<div class="data-source-card">
+					<h4 class="text-lg font-semibold flex items-center mb-2">
+						<i class="fas fa-city mr-2 text-yellow-300"></i> Building Data
+					</h4>
+					<p class="text-sm text-gray-300 mb-2"><span class="font-medium">Source:</span> HDB (Housing & Development Board)</p>
+					<p class="text-sm text-gray-300 mb-2"><span class="font-medium">Dataset:</span> HDB Existing Building</p>
+					<a href="https://data.gov.sg/datasets?query=HDB&page=1&resultId=d_16b157c52ed637edd6ba1232e026258d" class="data-source-link text-sm flex items-center">
+						<i class="fas fa-external-link-alt mr-1"></i> View on data.gov.sg </a>
+				</div>
+			</div>
+			<div class="flex flex-col md:flex-row justify-between items-center pt-4 border-t border-gray-700">
+				<div class="mb-4 md:mb-0">
+					<p class="text-sm text-gray-400">SG60: Visualizing Singapore's 60 Years of Development</p>
+					<p>Baorong Li & Ravi. Prudhvi Naga Sai Kumar</p>
+				</div>
 			</div>
 		</div>
-		<div class="map-container">
-			<div class="sg-map" id="overview-map"></div>
-		</div>
-	</section>
-	<!-- HDB Development section -->
-	<section id="hdb">
-		<h2>HDB Public Housing Development</h2>
-		<p>Since the Housing Development Board (HDB) was established in 1960, public housing has gradually covered the entire island, witnessing Singapore's urbanization process.</p>
-		<div class="controls">
-			<input type="range" min="1965" max="2025" value="2025" step="5" class="year-slider" id="hdb-slider">
-			<div class="year-display" id="hdb-year-display">2025</div>
-		</div>
-		<div class="map-container">
-			<div class="sg-map" id="hdb-map"></div>
-		</div>
-		<h3>Growth and Types of HDB Units</h3>
-		<div class="chart-container" id="hdb-units-chart"></div>
-		<div class="chart-legend">
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#FFCCCC;"></div>
-				<div>1-2 Room</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#FFAA66;"></div>
-				<div>3 Room</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#FF7733;"></div>
-				<div>4 Room</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#CC0000;"></div>
-				<div>5 Room/Executive</div>
-			</div>
-		</div>
-	</section>
-	<!-- HDB 3D Map section -->
-	<section id="hdb3d">
-		<h2>HDB 3D Map Visualization</h2>
-		<p>This interactive 3D map shows HDB blocks with heights based on the actual number of floors. Colors indicate construction periods, revealing Singapore's public housing development pattern over time.</p>
-		<div class="controls">
-			<input type="range" min="1965" max="2025" value="2025" step="1" class="year-slider" id="hdb3d-slider">
-			<div class="year-display" id="hdb3d-year-display">2025</div>
-		</div>
-		<div class="map3d-container">
-			<div id="hdb3d-map"></div>
-			<div class="map-controls">
-				<button id="rotate-btn">Toggle Rotation</button>
-				<button id="reset-camera-btn">Reset View</button>
-				<select id="color-scheme-select">
-					<option value="year">Color by Year</option>
-					<option value="height">Color by Height</option>
-				</select>
-			</div>
-		</div>
-		<div class="chart-legend" id="hdb3d-legend">
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#1a9850;"></div>
-				<div>1960-1970</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#91cf60;"></div>
-				<div>1971-1980</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#d9ef8b;"></div>
-				<div>1981-1990</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#fee08b;"></div>
-				<div>1991-2000</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#fc8d59;"></div>
-				<div>2001-2010</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#d73027;"></div>
-				<div>2011-2025</div>
-			</div>
-		</div>
-	</section>
-	<!-- Population Structure section -->
-	<section id="population">
-		<h2>Population Structure Evolution</h2>
-		<p>Changes in Singapore's population structure reflect the evolution of society, economy, and policies.</p>
-		<div class="controls">
-			<input type="range" min="1965" max="2025" value="2025" step="5" class="year-slider" id="pop-slider">
-			<div class="year-display" id="pop-year-display">2025</div>
-		</div>
-		<h3>Population Pyramid</h3>
-		<div class="chart-container" id="population-pyramid"></div>
-		<h3>Population Distribution Map</h3>
-		<div class="controls">
-			<select id="pop-type-select">
-				<option value="total">Total Population</option>
-				<option value="elderly">65 Years and Above</option>
-				<option value="children">14 Years and Below</option>
-			</select>
-		</div>
-		<div class="map-container">
-			<div class="sg-map" id="population-map"></div>
-		</div>
-	</section>
-	<!-- Land Evolution section -->
-	<section id="landuse">
-		<h2>Land Area and Usage Evolution</h2>
-		<p>Through land reclamation and redevelopment, Singapore continuously expands and optimizes its limited land resources.</p>
-		<div class="controls">
-			<input type="range" min="1965" max="2025" value="2025" step="5" class="year-slider" id="land-slider">
-			<div class="year-display" id="land-year-display">2025</div>
-		</div>
-		<div class="map-container">
-			<div class="sg-map" id="landuse-map"></div>
-		</div>
-		<h3>Land Use Distribution</h3>
-		<div class="chart-container" id="landuse-chart"></div>
-		<div class="chart-legend">
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#E63946;"></div>
-				<div>Residential</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#9381FF;"></div>
-				<div>Industrial</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#457B9D;"></div>
-				<div>Commercial</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#2A9D8F;"></div>
-				<div>Green Space</div>
-			</div>
-			<div class="legend-item">
-				<div class="legend-color" style="background-color:#6C757D;"></div>
-				<div>Public Facilities</div>
-			</div>
-		</div>
-	</section>
-	<footer>
-		<p>Data Sources: Singapore Department of Statistics | Housing Development Board | Urban Redevelopment Authority</p>
-		<p>SG60 Data Visualization Project</p>
-		<p>Baorong Li & Ravi. Prudhvi Naga Sai Kumar</p>
 	</footer>
-	<div class="tooltip" id="tooltip"></div>
+	<!-- NAVIGATION & 3D MAP INITIALIZATION SCRIPT -->
 	<script>
-		// ======= Mock data =======
-		const timelineEvents = [
-		  { year:1965, event:"Singapore Independence", major:true },
-		  { year:1970, event:"Family Planning Policy", major:false },
-		  { year:1975, event:"CPF Housing Scheme Established", major:false },
-		  { year:1980, event:"First New Town Completed", major:false },
-		  { year:1990, event:"First Concept Plan Released", major:true },
-		  { year:2000, event:"Major Land Reclamation Project", major:false },
-		  { year:2010, event:"Marina Bay Sands Opening", major:false },
-		  { year:2020, event:"Aging Population Planning", major:true },
-		  { year:2025, event:"SG60 60th Anniversary", major:true }
-		];
-		
-		// HDB development data - units every five years
-		const hdbData = [
-		  { year: 1965, units: { "1-2 Room": 20000, "3 Room": 10000, "4 Room": 5000, "5 Room/Executive": 1000 } },
-		  { year: 1970, units: { "1-2 Room": 35000, "3 Room": 20000, "4 Room": 8000, "5 Room/Executive": 2000 } },
-		  { year: 1975, units: { "1-2 Room": 50000, "3 Room": 40000, "4 Room": 15000, "5 Room/Executive": 5000 } },
-		  { year: 1980, units: { "1-2 Room": 70000, "3 Room": 80000, "4 Room": 30000, "5 Room/Executive": 10000 } },
-		  { year: 1985, units: { "1-2 Room": 85000, "3 Room": 120000, "4 Room": 60000, "5 Room/Executive": 20000 } },
-		  { year: 1990, units: { "1-2 Room": 100000, "3 Room": 160000, "4 Room": 100000, "5 Room/Executive": 40000 } },
-		  { year: 1995, units: { "1-2 Room": 110000, "3 Room": 200000, "4 Room": 150000, "5 Room/Executive": 70000 } },
-		  { year: 2000, units: { "1-2 Room": 120000, "3 Room": 240000, "4 Room": 200000, "5 Room/Executive": 100000 } },
-		  { year: 2005, units: { "1-2 Room": 125000, "3 Room": 270000, "4 Room": 250000, "5 Room/Executive": 120000 } },
-		  { year: 2010, units: { "1-2 Room": 130000, "3 Room": 300000, "4 Room": 280000, "5 Room/Executive": 140000 } },
-		  { year: 2015, units: { "1-2 Room": 135000, "3 Room": 320000, "4 Room": 310000, "5 Room/Executive": 160000 } },
-		  { year: 2020, units: { "1-2 Room": 140000, "3 Room": 340000, "4 Room": 330000, "5 Room/Executive": 180000 } },
-		  { year: 2025, units: { "1-2 Room": 145000, "3 Room": 350000, "4 Room": 350000, "5 Room/Executive": 200000 } }
-		];
-		
-		// Population pyramid data - age structure every five years
-		const populationData = [
-		  {
-		    year: 1965,
-		    structure: [
-		      { ageGroup: "0-4", male: 12, female: 11 },
-		      { ageGroup: "5-9", male: 11, female: 10 },
-		      { ageGroup: "10-14", male: 10, female: 9 },
-		      { ageGroup: "15-19", male: 9, female: 8 },
-		      { ageGroup: "20-24", male: 8, female: 7 },
-		      { ageGroup: "25-29", male: 7, female: 6 },
-		      { ageGroup: "30-34", male: 6, female: 5 },
-		      { ageGroup: "35-39", male: 5, female: 4 },
-		      { ageGroup: "40-44", male: 4, female: 3 },
-		      { ageGroup: "45-49", male: 3, female: 2 },
-		      { ageGroup: "50-54", male: 2, female: 1.5 },
-		      { ageGroup: "55-59", male: 1.5, female: 1 },
-		      { ageGroup: "60-64", male: 1, female: 0.8 },
-		      { ageGroup: "65-69", male: 0.7, female: 0.6 },
-		      { ageGroup: "70-74", male: 0.5, female: 0.4 },
-		      { ageGroup: "75-79", male: 0.3, female: 0.3 },
-		      { ageGroup: "80+", male: 0.2, female: 0.2 }
-		    ]
-		  },
-		  {
-		    year: 2025,
-		    structure: [
-		      { ageGroup: "0-4", male: 5, female: 5 },
-		      { ageGroup: "5-9", male: 5.5, female: 5.5 },
-		      { ageGroup: "10-14", male: 6, female: 6 },
-		      { ageGroup: "15-19", male: 6.5, female: 6.5 },
-		      { ageGroup: "20-24", male: 7, female: 7 },
-		      { ageGroup: "25-29", male: 8, female: 8 },
-		      { ageGroup: "30-34", male: 9, female: 9 },
-		      { ageGroup: "35-39", male: 10, female: 10 },
-		      { ageGroup: "40-44", male: 9, female: 9 },
-		      { ageGroup: "45-49", male: 8, female: 8 },
-		      { ageGroup: "50-54", male: 7, female: 7 },
-		      { ageGroup: "55-59", male: 6, female: 6 },
-		      { ageGroup: "60-64", male: 5, female: 5.5 },
-		      { ageGroup: "65-69", male: 4, female: 4.5 },
-		      { ageGroup: "70-74", male: 3, female: 3.5 },
-		      { ageGroup: "75-79", male: 2, female: 2.5 },
-		      { ageGroup: "80+", male: 1.5, female: 2 }
-		    ]
-		  }
-		];
-		
-		// Land use data - distribution every five years
-		const landUseData = [
-		  {
-		    year: 1965,
-		    usage: { "Residential": 10, "Industrial": 10, "Commercial": 5, "Green Space": 50, "Public Facilities": 25 }
-		  },
-		  {
-		    year: 1975,
-		    usage: { "Residential": 15, "Industrial": 12, "Commercial": 6, "Green Space": 47, "Public Facilities": 20 }
-		  },
-		  {
-		    year: 1985,
-		    usage: { "Residential": 18, "Industrial": 15, "Commercial": 8, "Green Space": 44, "Public Facilities": 15 }
-		  },
-		  {
-		    year: 1995,
-		    usage: { "Residential": 20, "Industrial": 16, "Commercial": 10, "Green Space": 39, "Public Facilities": 15 }
-		  },
-		  {
-		    year: 2005,
-		    usage: { "Residential": 22, "Industrial": 17, "Commercial": 12, "Green Space": 35, "Public Facilities": 14 }
-		  },
-		  {
-		    year: 2015,
-		    usage: { "Residential": 24, "Industrial": 15, "Commercial": 15, "Green Space": 33, "Public Facilities": 13 }
-		  },
-		  {
-		    year: 2025,
-		    usage: { "Residential": 25, "Industrial": 14, "Commercial": 16, "Green Space": 32, "Public Facilities": 13 }
-		  }
-		];
-		
-		// Mock Singapore map data (simplified)
-		const sgMapData = {
-		  width: 400,
-		  height: 300,
-		  regions: [
-		    { id: "central", name: "Central Region", x: 200, y: 150, r: 30 },
-		    { id: "north", name: "North Region", x: 200, y: 80, r: 25 },
-		    { id: "east", name: "East Region", x: 260, y: 150, r: 25 },
-		    { id: "west", name: "West Region", x: 140, y: 150, r: 25 },
-		    { id: "northeast", name: "Northeast Region", x: 230, y: 110, r: 20 }
-		  ],
-		  reclaimed: [
-		    { year: 1975, path: "M200,150 L220,140 L240,150 L220,160 Z" },
-		    { year: 1985, path: "M260,150 L280,140 L290,160 L270,170 Z" },
-		    { year: 1995, path: "M140,150 L120,140 L110,160 L130,170 Z" },
-		    { year: 2005, path: "M200,210 L220,200 L240,210 L220,220 Z" },
-		    { year: 2015, path: "M300,150 L320,140 L330,160 L310,170 Z" }
-		  ]
-		};
-		
-		// ======= 3D HDB Variables =======
-		let scene, camera, renderer, controls;
-		let hdbBuildings = [];
-		let hdbData3D = [];
-		let isRotating = false;
-		let colorScheme = 'year';
-		
-		// ======= Initialization =======
 		document.addEventListener('DOMContentLoaded', () => {
-		  // tooltip 创建
-		  if (!document.getElementById('tooltip')) {
-		    const tooltip = document.createElement('div');
-		    tooltip.id = 'tooltip';
-		    tooltip.style.position = 'absolute';
-		    tooltip.style.padding = '8px';
-		    tooltip.style.background = 'rgba(0,0,0,0.7)';
-		    tooltip.style.color = 'white';
-		    tooltip.style.borderRadius = '4px';
-		    tooltip.style.pointerEvents = 'none';
-		    tooltip.style.zIndex = '10000';
-		    tooltip.style.display = 'none';
-		    document.body.appendChild(tooltip);
-		  }
-		
-		  initTimeline();
-		  initOverviewMap();
-		  initHDBChart();
-		  initPopulationPyramid();
-		  initPopulationMap();
-		  initLandUseMap();
-		  setupEventListeners();
-		
-		  if (typeof THREE !== 'undefined') {
-		    loadHDBGeoJSON();
-		  } else {
-		    console.error('Three.js not loaded, cannot initialize 3D visualization');
-		  }
-		});
-		
-		// ======= GeoJSON 加载 =======
-		function loadHDBGeoJSON() {
-		  if (typeof THREE === 'undefined') {
-		    console.error('Three.js not loaded, cannot init 3D visualization');
-		    return;
-		  }
-		
-		  d3.json('https://raw.githubusercontent.com/carionb/Local/main/HDB.geojson')
-		    .then(geojson => {
-		      hdbData3D = geojson.features.map(feat => {
-		        const coords = feat.geometry.coordinates[0];
-		        let sumX=0, sumY=0;
-		        coords.forEach(pt=>{ sumX+=pt[0]; sumY+=pt[1]; });
-		        const cx=sumX/coords.length, cy=sumY/coords.length;
-		        return { x:cx, y:cy, floors:+feat.properties.HDB_with_2, year:+feat.properties.HDB_with_3 };
-		      });
-		      initHDB3D();
-		    })
-		    .catch(err => console.error('Failed to load HDB.geojson:', err));
-		}
+		  const nav = document.getElementById('main-nav');
+		  const mainContent = document.getElementById('main-content');
+		  const navItems = document.querySelectorAll('.nav-item');
 		  
-		
-		
-		// Year slider event listeners
-		function setupEventListeners() {
-		  document.querySelectorAll('.year-slider').forEach(slider => {
-		    slider.addEventListener('input', function() {
-		      const yearDisplayId = this.id.replace('slider', 'year-display');
-		      const yearDisplayEl = document.getElementById(yearDisplayId);
-		      if (yearDisplayEl) {
-		yearDisplayEl.textContent = this.value;
-		      }
+		  // Store the original position of the navbar
+		  const navPosition = nav.getBoundingClientRect().top + window.scrollY;
+		  
+		  // Function to handle scroll behavior
+		  function handleScroll() {
+		    if (window.scrollY >= navPosition) {
+		      // When scrolled past the original position, fix the navbar
+		      nav.classList.add('nav-fixed');
+		      mainContent.classList.add('content-padding');
+		    } else {
+		      // When scrolled back up, remove the fixed positioning
+		      nav.classList.remove('nav-fixed');
+		      mainContent.classList.remove('content-padding');
+		    }
+		    
+		    // Update active nav item based on scroll position
+		    const scrollPosition = window.scrollY + 100;
+		    const sections = document.querySelectorAll('section');
+		    
+		    sections.forEach(section => {
+		      const sectionTop = section.offsetTop;
+		      const sectionHeight = section.offsetHeight;
 		      
-		      if (this.id === 'hdb3d-slider') {
-		updateHDB3DMap(+this.value);
-		      } else {
-		updateAllVisualizationsByYear(+this.value);
+		      if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+		        const id = section.getAttribute('id');
+		        navItems.forEach(item => {
+		          item.classList.remove('active');
+		          if (item.getAttribute('href') === `#${id}`) {
+		            item.classList.add('active');
+		          }
+		        });
 		      }
+		    });
+		  }
+		  
+		  // Listen for scroll events
+		  window.addEventListener('scroll', handleScroll);
+		  
+		  // Add click event for navigation
+		  navItems.forEach(item => {
+		    item.addEventListener('click', e => {
+		      e.preventDefault();
+		      navItems.forEach(i => i.classList.remove('active'));
+		      item.classList.add('active');
+		      
+		      const targetId = item.getAttribute('href');
+		      const target = document.querySelector(targetId);
+		      
+		      target.scrollIntoView({ 
+		        behavior: 'smooth',
+		        block: 'start'
+		      });
 		    });
 		  });
 		
-		  // Set up control buttons
-		  const playBtn = document.getElementById('play-btn');
-		  if (playBtn) {
-		    playBtn.addEventListener('click', playTimelineAnimation);
+		  // =====================
+		  // 3D MAP INITIALIZATION
+		  // =====================
+		  
+		  // Initial view constants
+		  const initialCenter = [103.8, 1.35];
+		  const initialZoom = 10;
+		  const initialPitch = 0;
+		  const initialBearing = 0;
+		  const pitchStep = 15;
+		  const bearingStep = 45;
+		  let currentPitch = initialPitch;
+		
+		  // Helper: decode HTML entities
+		  function decodeEntities(str) {
+		    const txt = document.createElement('textarea');
+		    txt.innerHTML = str;
+		    return txt.value;
 		  }
 		
-		  const rotateBtn = document.getElementById('rotate-btn');
-		  if (rotateBtn) {
-		    rotateBtn.addEventListener('click', () => {
-		      isRotating = !isRotating;
-		      rotateBtn.textContent = isRotating ? 'Stop Rotation' : 'Toggle Rotation';
-		    });
-		  }
+		  // Initialize map as flat 2D Singapore-wide view
+		  const map = new maplibregl.Map({
+		    container: 'map',
+		    style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+		    center: initialCenter,
+		    zoom: initialZoom,
+		    pitch: initialPitch,
+		    bearing: initialBearing,
+		    antialias: true
+		  });
 		
-		  const resetCameraBtn = document.getElementById('reset-camera-btn');
-		  if (resetCameraBtn) {
-		    resetCameraBtn.addEventListener('click', resetCamera);
-		  }
+		  // Add compass only at top-right
+		  map.addControl(
+		    new maplibregl.NavigationControl({ showCompass: true, showZoom: false }),
+		    'top-right'
+		  );
+		  // Add scale bar
+		  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
 		
-		  const colorSchemeSelect = document.getElementById('color-scheme-select');
-		  if (colorSchemeSelect) {
-		    colorSchemeSelect.addEventListener('change', e => {
-		      colorScheme = e.target.value;
-		      updateHDB3DMap(+document.getElementById('hdb3d-slider').value);
-		      updateHDB3DLegend(colorScheme);
-		    });
-		  }
+		  map.on('load', async () => {
 		
-		  const popTypeSelect = document.getElementById('pop-type-select');
-		  if (popTypeSelect) {
-		    popTypeSelect.addEventListener('change', e => {
-		      const slider = document.getElementById('pop-slider') || document.getElementById('timeline-slider');
-		      if (slider) {
-		updatePopulationMap(+slider.value, e.target.value);
+		    document.getElementById('map').addEventListener('wheel', e => e.stopPropagation());
+		    document.getElementById('map').addEventListener('touchmove', e => e.stopPropagation());
+		    
+		  try {
+		// 1) Load Singapore boundary - Add error handling
+		try {
+		  const sgBoundaryResponse = await fetch( 'https://raw.githubusercontent.com/carionb/Local/main/MasterPlan2019RegionBoundaryNoSeaGEOJSON.geojson' ); const sgBoundaryGeoJSON = await sgBoundaryResponse.json();
+		  if (!sgBoundaryResponse.ok) {
+		    throw new Error(`Failed to load boundary: ${sgBoundaryResponse.status}`);
+		  }
+		  const sgBoundaryData = await sgBoundaryResponse.json();
+		  
+		  map.addSource('sg-boundary', {
+		    type: 'geojson',
+		    data: sgBoundaryData
+		  });
+		  
+		  map.addLayer({
+		    id: 'sg-boundary-line',
+		    type: 'line',
+		    source: 'sg-boundary',
+		    paint: {
+		      'line-color': '#0a0a0a',
+		      'line-width': 1
+		    }
+		  });
+		  console.log('Singapore boundary loaded successfully');
+		} catch (err) {
+		  console.warn('Error loading Singapore boundary:', err);
+		  // Continue anyway - this isn't critical for tooltips
+		}
+		
+		// 2) Load HDB GeoJSON with better error handling
+		let hdbData;
+		try {
+		  const hdbResponse = await fetch( 'https://raw.githubusercontent.com/carionb/Local/main/HDB_description_floor_year.geojson' ); const hdbGeoJSON = await hdbResponse.json();
+		  if (!resp.ok) {
+		    throw new Error(`Failed to load HDB data: ${resp.status}`);
+		  }
+		  hdbData = await resp.json();
+		  console.log('HDB data loaded successfully');
+		} catch (err) {
+		  console.warn('Error loading HDB data:', err);
+		  // Fallback to test data so tooltip can be demonstrated
+		  console.log('Using fallback test HDB data');
+		  hdbData = {
+		    "type": "FeatureCollection",
+		    "features": [
+		      {
+		        "type": "Feature",
+		        "properties": {
+		          "FLOOR": 12,
+		          "YEAR": 1985,
+		          "descriptio": "<table><tr><th>BLK_NO</th><td>123</td></tr><tr><th>STREET</th><td>Clementi Road</td></tr></table>"
+		        },
+		        "geometry": {
+		          "type": "Polygon",
+		          "coordinates": [[[103.8, 1.35], [103.81, 1.35], [103.81, 1.36], [103.8, 1.36], [103.8, 1.35]]]
+		        }
+		      },
+		      {
+		        "type": "Feature",
+		        "properties": {
+		          "floor": 25,
+		          "year": 2005,
+		          "descriptio": "<table><tr><th>Blk_No</th><td>456</td></tr><tr><th>Street</th><td>Orchard Road</td></tr></table>"
+		        },
+		        "geometry": {
+		          "type": "Polygon",
+		          "coordinates": [[[103.82, 1.37], [103.83, 1.37], [103.83, 1.38], [103.82, 1.38], [103.82, 1.37]]]
+		        }
 		      }
-		    });
+		    ]
+		  };
+		}
+		
+		// Now add the HDB data to the map
+		map.addSource('hdb', {
+		  type: 'geojson',
+		  data: hdbData,
+		  generateId: true
+		});
+		
+		// 3) Year slider setup with error handling
+		const years = hdbData.features
+		  .map(f => f.properties.YEAR || f.properties.year)
+		  .filter(y => y && y >= 1950 && y <= 2024); 
+		
+		const minY = years.length > 0 ? Math.min(...years) : 1950;
+		const maxY = years.length > 0 ? Math.max(...years) : 2024;
+		
+		const slider = document.getElementById('year-slider');
+		const label = document.getElementById('year-value');
+		slider.min = minY; 
+		slider.max = maxY; 
+		slider.value = maxY;
+		label.textContent = maxY;
+		
+		// 4) Single extrusion layer with color expression for hover
+		map.addLayer({
+		  id: 'hdb-3d',
+		  type: 'fill-extrusion',
+		  source: 'hdb',
+		  paint: {
+		    // if hovered → yellow, else grey
+		    'fill-extrusion-color': [
+		      'case',
+		      ['boolean', ['feature-state','hover'], false],
+		      '#ffeb3b',
+		      '#cccccc'
+		    ],
+		    'fill-extrusion-height': ['*',
+		      ['coalesce', ['get','FLOOR'], ['get','floor'], 1], 3
+		    ],
+		    'fill-extrusion-opacity': 0.85,
+		    'fill-extrusion-vertical-gradient': true
+		  }
+		});
+		
+		function parseDesc(html) {
+		  if (!html) return { block: 'N/A', street: 'N/A' };
+		  
+		  try {
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(decodeEntities(html), 'text/html');
+		const rows = doc.querySelectorAll('tr');
+		const data = {};
+		
+		rows.forEach(row => {
+		  const th = row.querySelector('th')?.textContent?.trim().toLowerCase();
+		  const td = row.querySelector('td')?.textContent?.trim();
+		  if (th && td) {
+		    if (th.includes('blk')) data.block = td;
+		    if (th.includes('street')) data.street = td;
+		  }
+		});
+		
+		return {
+		  block: data.block || 'N/A',
+		  street: data.street || 'N/A'
+		};
+		  } catch (e) {
+		console.warn('Error parsing description:', e);
+		return { block: 'Error', street: 'Error' };
+		  }
+		}
+		// Hover interaction with better error handling
+		
+		let hoveredId = null;
+		const buildingInfo = document.getElementById('building-info');
+		
+		map.on('mousemove', 'hdb-3d', (e) => {
+		  try {
+		if (e.features.length === 0) return;
+		
+		if (hoveredId !== null) {
+		  map.setFeatureState({ source: 'hdb', id: hoveredId }, { hover: false });
+		}
+		
+		hoveredId = e.features[0].id;
+		map.setFeatureState({ source: 'hdb', id: hoveredId }, { hover: true });
+		
+		const p = e.features[0].properties;
+		
+		// Fix 
+		const desc = parseDesc(p.descriptio || p.description || '');
+		const year = p.YEAR || p.year || 'N/A';
+		const floors = p.FLOOR || p.floor || 'N/A';
+		
+		buildingInfo.innerHTML = `
+		  <div class="building-info-row">
+		    <div class="building-info-label">Block</div>
+		    <div class="building-info-value">${desc.block}</div> <!-- 使用 desc 而不是 d -->
+		  </div>
+		  <div class="building-info-row">
+		    <div class="building-info-label">Street</div>
+		    <div class="building-info-value">${desc.street}</div>
+		  </div>
+		  <div class="building-info-row">
+		    <div class="building-info-label">Year</div>
+		    <div class="building-info-value">${year}</div>
+		  </div>
+		  <div class="building-info-row">
+		    <div class="building-info-label">Floors</div>
+		    <div class="building-info-value">${floors}</div>
+		  </div>
+		`;
+		
+		  } catch (err) {
+		console.error('Error in mousemove handler:', err);
+		
+		buildingInfo.innerHTML = `
+		  <div class="no-building-selected">
+		    Information currently unavailable
+		  </div>
+		`;
+		  }
+		});
+		
+		map.on('mouseleave', 'hdb-3d', () => {
+		  try {
+		if (hoveredId !== null) {
+		  map.setFeatureState({ source: 'hdb', id: hoveredId }, { hover: false });
+		}
+		hoveredId = null;
+		buildingInfo.innerHTML = `
+		  <div class="no-building-selected">
+		    Hover over a building to see details
+		  </div>
+		`;
+		  } catch (err) {
+		console.error('Error in mouseleave handler:', err);
+		  }
+		});
+		
+		// 6) Year filter
+		slider.oninput = e => {
+		  try {
+		    const y = +e.target.value;
+		    label.textContent = y;
+		    map.setFilter('hdb-3d', [
+		      '<=', ['coalesce', ['get', 'YEAR'], ['get', 'year'], 0], y
+		    ]);
+		  } catch (err) {
+		    console.error('Error in slider handler:', err);
 		  }
 		};
 		
+		// 7) Remote-control actions remain the same
+		function ease(opts) { 
+		  map.easeTo(Object.assign({ duration: 500 }, opts)); 
+		}
 		
-		// ======= Timeline =======
-		function initTimeline() {
-		  const timeline = d3.select('#timeline');
-		  if (timeline.empty()) {
-		    console.warn('Timeline container not found');
-		    return;
-		  }
-		  
-		  const width = timeline.node().getBoundingClientRect().width;
-		  const timeScale = d3.scaleLinear().domain([1965, 2025]).range([50, width-50]);
-		  
-		  timelineEvents.forEach(ev => {
-		    const x = timeScale(ev.year);
-		    // marker
-		    timeline.append('div')
-		      .attr('class', 'timeline-marker' + (ev.major ? ' major' : ''))
-		      .style('left', x + 'px')
-		      .on('mouseover', () => {
-		d3.select('#tooltip')
-		  .style('display', 'block')
-		  .html(`<strong>${ev.year}</strong>: ${ev.event}`)
-		  .style('left', x + 'px')
-		  .style('top', '20px');
-		      })
-		      .on('mouseout', () => d3.select('#tooltip').style('display', 'none'));
-		    
-		    // label
-		    timeline.append('div')
-		      .attr('class', 'timeline-label')
-		      .style('left', x + 'px')
-		      .text(ev.year);
-		    
-		    // event text for majors
-		    if (ev.major) {
-		      timeline.append('div')
-		.attr('class', 'timeline-event')
-		.style('left', x + 'px')
-		.text(ev.event);
-		    }
+		document.getElementById('tilt-up').onclick = () => {
+		  currentPitch = Math.min(85, currentPitch + pitchStep);
+		  ease({ pitch: currentPitch });
+		};
+		document.getElementById('tilt-down').onclick = () => {
+		  currentPitch = Math.max(0, currentPitch - pitchStep);
+		  ease({ pitch: currentPitch });
+		};
+		document.getElementById('reset-view').onclick = () => {
+		  currentPitch = initialPitch;
+		  ease({
+		    center: initialCenter,
+		    zoom: initialZoom,
+		    pitch: initialPitch,
+		    bearing: initialBearing
 		  });
-		}
+		};
+		document.getElementById('rotate-right').onclick = () => {
+		  ease({ bearing: map.getBearing() - bearingStep });
+		};
+		document.getElementById('rotate-left').onclick = () => {
+		  ease({ bearing: map.getBearing() + bearingStep });
+		};
 		
-		// ======= Overview Map =======
-		function initOverviewMap() {
-		  const container = d3.select('#overview-map');
-		  if (container.empty()) {
-		    console.warn('Overview map container not found');
-		    return;
+		console.log('Map initialization complete');
+		  } catch (err) {
+		console.error('Fatal error in map initialization:', err);
 		  }
-		  
-		  const svg = container.append('svg')
-		    .attr('width', '100%')
-		    .attr('height', '100%')
-		    .attr('viewBox', `0 0 ${sgMapData.width} ${sgMapData.height}`);
-		    
-		  // Base regions
-		  svg.selectAll('.region')
-		    .data(sgMapData.regions)
-		    .enter()
-		    .append('circle')
-		    .attr('cx', d => d.x)
-		    .attr('cy', d => d.y)
-		    .attr('r', d => d.r)
-		    .attr('fill', '#f0f0f0')
-		    .attr('stroke', '#cc0000')
-		    .attr('stroke-width', 2)
-		    .on('mouseover', (event, d) => {
-		      d3.select('#tooltip')
-		.style('display', 'block')
-		.html(`<strong>${d.name}</strong>`)
-		.style('left', `${event.pageX + 10}px`)
-		.style('top', `${event.pageY - 30}px`);
-		    })
-		    .on('mouseout', () => {
-		      d3.select('#tooltip').style('display', 'none');
-		    });
-		    
-		  // Region labels
-		  svg.selectAll('.region-label')
-		    .data(sgMapData.regions)
-		    .enter()
-		    .append('text')
-		    .attr('x', d => d.x)
-		    .attr('y', d => d.y)
-		    .attr('text-anchor', 'middle')
-		    .attr('dominant-baseline', 'central')
-		    .attr('font-size', '10px')
-		    .attr('fill', '#333')
-		    .text(d => d.name);
-		    
-		  // Draw reclaimed areas based on year
-		  updateOverviewMap(2025);
-		}
-		
-		function updateOverviewMap(year) {
-		  const svg = d3.select('#overview-map svg');
-		  if (svg.empty()) return;
-		  
-		  // Remove existing reclaimed areas
-		  svg.selectAll('.reclaimed').remove();
-		  
-		  // Add reclaimed areas up to selected year
-		  svg.selectAll('.reclaimed')
-		    .data(sgMapData.reclaimed.filter(d => d.year <= year))
-		    .enter()
-		    .append('path')
-		    .attr('class', 'reclaimed')
-		    .attr('d', d => d.path)
-		    .attr('fill', '#e6f2ff')
-		    .attr('stroke', '#0066cc')
-		    .attr('stroke-width', 1)
-		    .on('mouseover', (event, d) => {
-		      d3.select('#tooltip')
-		.style('display', 'block')
-		.html(`<strong>Reclaimed Land (${d.year})</strong>`)
-		.style('left', `${event.pageX + 10}px`)
-		.style('top', `${event.pageY - 30}px`);
-		    })
-		    .on('mouseout', () => {
-		      d3.select('#tooltip').style('display', 'none');
-		    });
-		}
-		
-		// ======= HDB Chart =======
-		function initHDBChart() {
-		  const container = d3.select('#hdb-units-chart');
-		  if (container.empty()) {
-		    console.warn('HDB units chart container not found');
-		    return;
-		  }
-		  
-		  const svg = container.append('svg')
-		    .attr('width', '100%')
-		    .attr('height', '100%');
-		    
-		  // Draw initial chart
-		  updateHDBChart(2025);
-		  
-		  // Initialize hdb map
-		  initHDBMap();
-		}
-		
-		function updateHDBChart(year) {
-		  const svg = d3.select('#hdb-units-chart svg');
-		  if (svg.empty()) return;
-		  
-		  // Find closest year in data
-		  const yearData = hdbData.find(d => d.year <= year && d.year >= year - 5) || hdbData[hdbData.length - 1];
-		  
-		  const margin = {top: 20, right: 30, bottom: 40, left: 60};
-		  const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
-		  const height = svg.node().getBoundingClientRect().height - margin.top - margin.bottom;
-		  
-		  // Clear previous chart
-		  svg.selectAll('*').remove();
-		  
-		  const g = svg.append('g')
-		    .attr('transform', `translate(${margin.left},${margin.top})`);
-		  
-		  // Convert data for stacked bar chart
-		  const keys = Object.keys(yearData.units);
-		  
-		  // Colors
-		  const colors = {
-		    "1-2 Room": "#FFCCCC",
-		    "3 Room": "#FFAA66",
-		    "4 Room": "#FF7733",
-		    "5 Room/Executive": "#CC0000"
-		  };
-		  
-		  // X scale for room types
-		  const x = d3.scaleBand()
-		    .domain(keys)
-		    .range([0, width])
-		    .padding(0.2);
-		  
-		  // Y scale for number of units
-		  const y = d3.scaleLinear()
-		    .domain([0, d3.max(Object.values(yearData.units)) * 1.1])
-		    .range([height, 0]);
-		    
-		  // Draw bars
-		  g.selectAll('.bars')
-		    .data(keys)
-		    .enter()
-		    .append('rect')
-		    .attr('x', d => x(d))
-		    .attr('y', d => y(yearData.units[d]))
-		    .attr('width', x.bandwidth())
-		    .attr('height', d => height - y(yearData.units[d]))
-		    .attr('fill', d => colors[d])
-		    .on('mouseover', (event, d) => {
-		      d3.select('#tooltip')
-		.style('display', 'block')
-		.html(`<strong>${d}</strong>: ${yearData.units[d].toLocaleString()} units`)
-		.style('left', `${event.pageX + 10}px`)
-		.style('top', `${event.pageY - 30}px`);
-		    })
-		    .on('mouseout', () => {
-		      d3.select('#tooltip').style('display', 'none');
-		    });
-		    
-		  // Add axes
-		  g.append('g')
-		    .attr('transform', `translate(0,${height})`)
-		    .call(d3.axisBottom(x));
-		    
-		  g.append('g')
-		    .call(d3.axisLeft(y).ticks(5).tickFormat(d => d/1000 + 'k'));
-		    
-		  // Add title
-		  g.append('text')
-		    .attr('x', width / 2)
-		    .attr('y', 0)
-		    .attr('text-anchor', 'middle')
-		    .style('font-size', '16px')
-		    .style('font-weight', 'bold')
-		    .text(`HDB Units Distribution (${yearData.year})`);
-		    
-		  // Add y-axis label
-		  g.append('text')
-		    .attr('transform', 'rotate(-90)')
-		    .attr('y', -40)
-		    .attr('x', -height / 2)
-		    .attr('text-anchor', 'middle')
-		    .text('Number of Units');
-		}
-		
-		// ======= HDB Map =======
-		function initHDBMap() {
-		  const container = d3.select('#hdb-map');
-		  if (container.empty()) {
-		    console.warn('HDB map container not found');
-		    return;
-		  }
-		  
-		  const svg = container.append('svg')
-		    .attr('width', '100%')
-		    .attr('height', '100%')
-		    .attr('viewBox', `0 0 ${sgMapData.width} ${sgMapData.height}`);
-		    
-		  // Base map similar to overview
-		  sgMapData.regions.forEach(region => {
-		    svg.append('circle')
-		      .attr('cx', region.x)
-		      .attr('cy', region.y)
-		      .attr('r', region.r)
-		      .attr('fill', '#f0f0f0')
-		      .attr('stroke', '#999')
-		      .attr('stroke-width', 1);
-		  });
-		  
-		  // Initial update
-		  updateHDBMap(2025);
-		}
-		
-		function updateHDBMap(year) {
-		  const svg = d3.select('#hdb-map svg');
-		  if (svg.empty()) return;
-		  
-		  // Remove existing HDB dots
-		  svg.selectAll('.hdb-estate').remove();
-		  
-		  // Create fictitious HDB estates based on year
-		  const totalEstates = Math.min(50, Math.floor((year - 1960) / 1.3));
-		  const estates = [];
-		  
-		  for (let i = 0; i < totalEstates; i++) {
-		    const region = sgMapData.regions[i % sgMapData.regions.length];
-		    const angle = Math.random() * Math.PI * 2;
-		    const distance = Math.random() * region.r * 0.8;
-		    
-		    estates.push({
-		      x: region.x + Math.cos(angle) * distance,
-		      y: region.y + Math.sin(angle) * distance,
-		      size: 3 + Math.random() * 5,
-		      year: 1965 + Math.floor(i * (year - 1965) / totalEstates),
-		      name: `Estate ${i+1}`
-		    });
-		  }
-		  
-		  // Add HDB estate markers
-		  svg.selectAll('.hdb-estate')
-		    .data(estates)
-		    .enter()
-		    .append('circle')
-		    .attr('class', 'hdb-estate')
-		    .attr('cx', d => d.x)
-		    .attr('cy', d => d.y)
-		    .attr('r', d => d.size)
-		    .attr('fill', d => {
-		      // Color based on construction period
-		      if (d.year < 1975) return "#1a9850";
-		      if (d.year < 1985) return "#91cf60";
-		      if (d.year < 1995) return "#d9ef8b";
-		      if (d.year < 2005) return "#fee08b";
-		      if (d.year < 2015) return "#fc8d59";
-		      return "#d73027";
-		    })
-		    .attr('stroke', '#fff')
-		    .attr('stroke-width', 0.5)
-		    .on('mouseover', (event, d) => {
-		      d3.select('#tooltip')
-		.style('display', 'block')
-		.html(`<strong>${d.name}</strong><br>Built in ${d.year}`)
-		.style('left', `${event.pageX + 10}px`)
-		.style('top', `${event.pageY - 30}px`);
-		    })
-		    .on('mouseout', () => {
-		      d3.select('#tooltip').style('display', 'none');
-		    });
-		}
-		
-		// ======= HDB 3D Map =======
-		function loadHDBGeoJSON() {
-		  if (typeof THREE === 'undefined') {
-		    console.error('Three.js not loaded, cannot init 3D visualization');
-		    return;
-		  }
-		
-		  d3.json('https://raw.githubusercontent.com/carionb/Local/main/HDB.geojson')
-		    .then(geojson => {
-		      hdbData3D = geojson.features.map(feat => {
-		        // compute centroid of the first ring
-		        const coords = feat.geometry.coordinates[0];
-		        let sumX = 0, sumY = 0;
-		        coords.forEach(pt => { sumX += pt[0]; sumY += pt[1]; });
-		        const cx = sumX / coords.length, cy = sumY / coords.length;
-		        return {
-		          x: cx,
-		          y: cy,
-		          floors: +feat.properties.HDB_with_2,  // floors from property
-		          year:   +feat.properties.HDB_with_3   // build year from property
-		        };
-		      });
-		      initHDB3D();  // initialize Three.js scene with real data
-		    })
-		    .catch(err => console.error('Failed to load HDB.geojson:', err));
-		}
-		
-		// -----------------------------
-		// 2. Initialize the 3D scene
-		// -----------------------------
-		function initHDB3D() {
-		  const container = document.getElementById('hdb3d-map');
-		  if (!container) {
-		    console.warn('3D map container not found');
-		    return;
-		  }
-		  
-		  if (typeof THREE === 'undefined') {
-		    console.error('THREE.js is not loaded');
-		    return;
-		  }
-		
-		  // scene, camera, renderer
-		  scene = new THREE.Scene();
-		  scene.background = new THREE.Color(0xf0f0f0);
-		  const w = container.clientWidth, h = container.clientHeight;
-		  camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 1000);
-		  camera.position.set(200,200,200);
-		  camera.lookAt(200,0,150);
-		  renderer = new THREE.WebGLRenderer({ antialias: true });
-		  renderer.setSize(w,h);
-		  container.appendChild(renderer.domElement);
-		
-		  // orbit controls
-		  controls = new THREE.OrbitControls(camera, renderer.domElement);
-		  controls.enableDamping = true; controls.dampingFactor = 0.05;
-		
-		  // lights
-		  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-		  const dl = new THREE.DirectionalLight(0xffffff,0.8);
-		  dl.position.set(200,300,200);
-		  scene.add(dl);
-		
-		  // ground plane
-		  const plane = new THREE.Mesh(
-		    new THREE.PlaneGeometry(400,300),
-		    new THREE.MeshStandardMaterial({ color:0xcccccc, side:THREE.DoubleSide })
-		  );
-		  plane.rotation.x = -Math.PI/2;
-		  plane.position.set(200,-0.1,150);
-		  scene.add(plane);
-		
-		  // initial draw
-		  updateHDB3DMap(+document.getElementById('hdb3d-slider').value || 2025);
-		
-		  // handle resize
-		  window.addEventListener('resize', ()=> {
-		    const W = container.clientWidth, H = container.clientHeight;
-		    renderer.setSize(W,H);
-		    camera.aspect = W/H;
-		    camera.updateProjectionMatrix();
-		  });
-		
-		  // animate loop
-		  (function animate(){
-		    requestAnimationFrame(animate);
-		    if(isRotating) scene.rotation.y += 0.005;
-		    controls.update();
-		    renderer.render(scene, camera);
-		  })();
-		
-		  // update legend
-		  updateHDB3DLegend(colorScheme);
-		}
-		
-		// -----------------------------
-		// 3. Update buildings by year
-		// -----------------------------
-		function updateHDB3DMap(year) {
-		  if (!scene) return;
-		  hdbBuildings.forEach(b=> scene.remove(b));
-		  hdbBuildings = [];
-		
-		  const visible = hdbData3D.filter(b=> b.year <= year);
-		  visible.forEach(b => {
-		    const height = b.floors * 2;
-		    const geo = new THREE.BoxGeometry(4, height, 4);
-		    let col;
-		    if (colorScheme==='year') {
-		      if (b.year<1970) col=0x1a9850;
-		      else if(b.year<1980) col=0x91cf60;
-		      else if(b.year<1990) col=0xd9ef8b;
-		      else if(b.year<2000) col=0xfee08b;
-		      else if(b.year<2010) col=0xfc8d59;
-		      else col=0xd73027;
-		    } else {
-		      if(b.floors<10) col=0x3288bd;
-		      else if(b.floors<15) col=0x66c2a5;
-		      else if(b.floors<20) col=0xabdda4;
-		      else if(b.floors<25) col=0xfdae61;
-		      else col=0xd53e4f;
-		    }
-		    const mat = new THREE.MeshStandardMaterial({ color: col });
-		    const mesh = new THREE.Mesh(geo, mat);
-		    mesh.position.set(b.x, height/2, b.y);
-		    mesh.userData = { year: b.year, floors: b.floors };
-		    hdbBuildings.push(mesh);
-		    scene.add(mesh);
-		  });
-		
-		  // simple hover tooltip via raycaster
-		  if (THREE.Raycaster) {
-		    const ray = new THREE.Raycaster(), mouse=new THREE.Vector2();
-		    renderer.domElement.onmousemove = e => {
-		      const r=renderer.domElement.getBoundingClientRect();
-		      mouse.x = ((e.clientX-r.left)/r.width)*2-1;
-		      mouse.y = -((e.clientY-r.top)/r.height)*2+1;
-		      ray.setFromCamera(mouse, camera);
-		      const hits = ray.intersectObjects(hdbBuildings);
-		      renderer.domElement.style.cursor = hits.length? 'pointer':'auto';
-		      if (hits[0]) {
-		        const d=hits[0].object.userData;
-		        const tip=document.getElementById('tooltip');
-		        tip.style.display='block';
-		        tip.innerHTML=`Built: ${d.year}<br>Floors: ${d.floors}`;
-		        tip.style.left=e.clientX+10+'px';
-		        tip.style.top=e.clientY-30+'px';
-		      } else {
-		        document.getElementById('tooltip').style.display='none';
-		      }
-		    };
-		  }
-		}
-		
-		// -----------------------------
-		// 4. Update 3D legend
-		// -----------------------------
-		function updateHDB3DLegend(scheme) {
-		  const lg = document.getElementById('hdb3d-legend');
-		  if (!lg) return;
-		  lg.innerHTML = '';
-		  const items = scheme==='year'
-		    ? [
-		        {c:'#1a9850',l:'1965-1970'},
-		        {c:'#91cf60',l:'1970-1980'},
-		        {c:'#d9ef8b',l:'1980-1990'},
-		        {c:'#fee08b',l:'1990-2000'},
-		        {c:'#fc8d59',l:'2000-2010'},
-		        {c:'#d73027',l:'2010-2025'}
-		      ]
-		    : [
-		        {c:'#3288bd',l:'Under 10 floors'},
-		        {c:'#66c2a5',l:'10-14 floors'},
-		        {c:'#abdda4',l:'15-19 floors'},
-		        {c:'#fdae61',l:'20-24 floors'},
-		        {c:'#d53e4f',l:'25+ floors'}
-		      ];
-		  items.forEach(it => {
-		    const div=document.createElement('div');
-		    div.className='legend-item';
-		    div.innerHTML=`<span class="legend-color" style="background:${it.c}"></span> ${it.l}`;
-		    lg.appendChild(div);
-		  });
-		}
-		
-		// -----------------------------
-		// 5. Reset camera & rotation
-		// -----------------------------
-		function resetCamera() {
-		  if (!camera||!controls||!scene) return;
-		  camera.position.set(200,200,200);
-		  camera.lookAt(200,0,150);
-		  scene.rotation.set(0,0,0);
-		  controls.target.set(200,0,150);
-		  controls.update();
-		}
-		
-		// ======= Population Pyramid =======
-		function initPopulationPyramid() {
-		  const container = d3.select('#population-pyramid');
-		  if (container.empty()) {
-		    console.warn('Population pyramid container not found');
-		    return;
-		  }
-		  
-		  // Create SVG
-		  const svg = container.append('svg')
-		    .attr('width', '100%')
-		    .attr('height', '100%');
-		    
-		  // Initial update
-		  updatePopulationPyramid(2025);
-		}
-		
-		function updatePopulationPyramid(year) {
-		  const svg = d3.select('#population-pyramid svg');
-		  if (svg.empty()) return;
-		  
-		  // Clear previous chart
-		  svg.selectAll('*').remove();
-		  
-		  // Find closest year data
-		  const yearData = populationData.find(d => d.year <= year) || populationData[populationData.length - 1];
-		  if (!yearData) return;
-		  
-		  const margin = {top: 20, right: 30, bottom: 40, left: 60};
-		  const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
-		  const height = svg.node().getBoundingClientRect().height - margin.top - margin.bottom;
-		  
-		  const g = svg.append('g')
-		    .attr('transform', `translate(${margin.left},${margin.top})`);
-		  
-		  // X scale for population percentage
-		  const x = d3.scaleLinear()
-		    .domain([0, d3.max(yearData.structure, d => Math.max(d.male, d.female)) * 1.1])
-		    .range([width/2, 0]);
-		  
-		  const xFemale = d3.scaleLinear()
-		    .domain([0, d3.max(yearData.structure, d => Math.max(d.male, d.female)) * 1.1])
-		    .range([width/2, width]);
-		  
-		  // Y scale for age groups
-		  const y = d3.scaleBand()
-		    .domain(yearData.structure.map(d => d.ageGroup))
-		    .range([0, height])
-		    .padding(0.1);
-		  
-		  // Add male bars
-		  g.selectAll('.male-bar')
-		    .data(yearData.structure)
-		    .enter()
-		    .append('rect')
-		    .attr('class', 'male-bar')
-		    .attr('x', d => x(d.male))
-		    .attr('y', d => y(d.ageGroup))
-		    .attr('width', d => width/2 - x(d.male))
-		    .attr('height', y.bandwidth())
-		    .attr('fill', '#4292c6')
-		    .on('mouseover', (event, d) => {
-		      d3.select('#tooltip')
-		.style('display', 'block')
-		.html(`<strong>${d.ageGroup}</strong><br>Males: ${d.male}%<br>Females: ${d.female}%`)
-		.style('left', `${event.pageX + 10}px`)
-		.style('top', `${event.pageY - 30}px`);
-		    })
-		    .on('mouseout', () => {
-		      d3.select('#tooltip').style('display', 'none');
-		    });
-		  
-		  // Add female bars
-		  g.selectAll('.female-bar')
-		    .data(yearData.structure)
-		    .enter()
-		    .append('rect')
-		    .attr('class', 'female-bar')
-		    .attr('x', width/2)
-		    .attr('y', d => y(d.ageGroup))
-		    .attr('width', d => xFemale(d.female) - width/2)
-		    .attr('height', y.bandwidth())
-		    .attr('fill', '#fb6a4a')
-		    .on('mouseover', (event, d) => {
-		      d3.select('#tooltip')
-		.style('display', 'block')
-		.html(`<strong>${d.ageGroup}</strong><br>Males: ${d.male}%<br>Females: ${d.female}%`)
-		.style('left', `${event.pageX + 10}px`)
-		.style('top', `${event.pageY - 30}px`);
-		    })
-		    .on('mouseout', () => {
-		      d3.select('#tooltip').style('display', 'none');
-		    });
-		  
-		  // Add vertical line in the middle
-		  g.append('line')
-		    .attr('x1', width/2)
-		    .attr('x2', width/2)
-		    .attr('y1', 0)
-		    .attr('y2', height)
-		    .attr('stroke', '#333')
-		    .attr('stroke-width', 1);
-		  
-		  // Add axes
-		  g.append('g')
-		    .attr('transform', `translate(0,${height})`)
-		    .call(d3.axisBottom(x).ticks(5).tickFormat(d => d + '%'));
-		  
-		  g.append('g')
-		    .attr('transform', `translate(${width},${height})`)
-		    .call(d3.axisBottom(x.copy().range([width, width/2])).ticks(5).tickFormat(d => d + '%'));
-		  
-		  g.append('g')
-		    .call(d3.axisLeft(y));
-		  
-		  // Add labels
-		  g.append('text')
-		    .attr('x', width/4)
-		    .attr('y', height + 35)
-		    .attr('text-anchor', 'middle')
-		    .text('Males (%)');
-		  
-		  g.append('text')
-		    .attr('x', 3*width/4)
-		    .attr('y', height + 35)
-		    .attr('text-anchor', 'middle')
-		    .text('Females (%)');
-		  
-		  // Add title
-		  g.append('text')
-		    .attr('x', width/2)
-		    .attr('y', -5)
-		    .attr('text-anchor', 'middle')
-		    .style('font-size', '16px')
-		    .style('font-weight', 'bold')
-		    .text(`Population Age Structure (${yearData.year})`);
-		}
-		
-		// ======= Population Map =======
-		function initPopulationMap() {
-		  const container = d3.select('#population-map');
-		  if (container.empty()) {
-		    console.warn('Population map container not found');
-		    return;
-		  }
-		  
-		  const svg = container.append('svg')
-		    .attr('width', '100%')
-		    .attr('height', '100%')
-		    .attr('viewBox', `0 0 ${sgMapData.width} ${sgMapData.height}`);
-		    
-		  // Base map
-		  sgMapData.regions.forEach(region => {
-		    svg.append('circle')
-		      .attr('cx', region.x)
-		      .attr('cy', region.y)
-		      .attr('r', region.r)
-		      .attr('fill', '#f0f0f0')
-		      .attr('stroke', '#999')
-		      .attr('stroke-width', 1);
-		      
-		    svg.append('text')
-		      .attr('x', region.x)
-		      .attr('y', region.y)
-		      .attr('text-anchor', 'middle')
-		      .attr('dominant-baseline', 'central')
-		      .attr('font-size', '10px')
-		      .attr('fill', '#333')
-		      .text(region.name);
-		  });
-		  
-		  // Initial update
-		  updatePopulationMap(2025, 'density');
-		}
-		
-		function updatePopulationMap(year, type) {
-		  const svg = d3.select('#population-map svg');
-		  if (svg.empty()) return;
-		  
-		  // Remove existing population symbols
-		  svg.selectAll('.population-symbol').remove();
-		  
-		  // Generate population symbols based on year and type
-		  const regions = sgMapData.regions;
-		  
-		  // Generate dummy data based on time progression
-		  const populationData = regions.map(region => {
-		    // Population growth is based on the year and region
-		    const basePopulation = 100000 + Math.random() * 500000;
-		    const growthFactor = (year - 1965) / 60; // 0 to 1 scale
-		    const population = basePopulation * (1 + growthFactor * 5);
-		    
-		    // Density is population divided by region area
-		    const area = Math.PI * region.r * region.r;
-		    const density = population / area;
-		    
-		    // Age factor - central regions tend to have older populations in later years
-		    const ageFactor = (region.name === 'Central Region') ? 
-		      0.3 + (year - 1965) / 60 * 0.4 : 
-		      0.2 + Math.random() * 0.3;
-		      
-		    return {
-		      x: region.x,
-		      y: region.y,
-		      population,
-		      density,
-		      ageFactor,
-		      name: region.name
-		    };
-		  });
-		  
-		  // Draw population symbols based on type
-		  if (type === 'density') {
-		    // Population density shown as circles
-		    svg.selectAll('.density-circle')
-		      .data(populationData)
-		      .enter()
-		      .append('circle')
-		      .attr('class', 'population-symbol')
-		      .attr('cx', d => d.x)
-		      .attr('cy', d => d.y)
-		      .attr('r', d => Math.sqrt(d.density) / 10)
-		      .attr('fill', d => {
-		// Color based on density
-		const densityScale = d3.scaleSequential(d3.interpolateYlOrRd)
-		  .domain([0, d3.max(populationData, d => d.density)]);
-		return densityScale(d.density);
-		      })
-		      .attr('fill-opacity', 0.7)
-		      .attr('stroke', '#fff')
-		      .attr('stroke-width', 0.5)
-		      .on('mouseover', (event, d) => {
-		d3.select('#tooltip')
-		  .style('display', 'block')
-		  .html(`<strong>${d.name}</strong><br>Population: ${Math.round(d.population).toLocaleString()}<br>Density: ${Math.round(d.density)} per km²`)
-		  .style('left', `${event.pageX + 10}px`)
-		  .style('top', `${event.pageY - 30}px`);
-		      })
-		      .on('mouseout', () => {
-		d3.select('#tooltip').style('display', 'none');
-		      });
-		  } else if (type === 'age') {
-		    // Age structure shown as pie charts
-		    const pie = d3.pie()
-		      .value(d => d.value)
-		      .sort(null);
-		      
-		    const arc = d3.arc()
-		      .innerRadius(0)
-		      .outerRadius(15);
-		      
-		    populationData.forEach(d => {
-		      // Create age structure data
-		      const ageData = [
-		{ name: '0-14', value: 0.2 - (d.ageFactor * 0.1) },
-		{ name: '15-64', value: 0.7 - (d.ageFactor * 0.1) },
-		{ name: '65+', value: 0.1 + (d.ageFactor * 0.2) }
-		      ];
-		      
-		      // Create pie chart group
-		      const g = svg.append('g')
-		.attr('class', 'population-symbol')
-		.attr('transform', `translate(${d.x},${d.y})`)
-		.on('mouseover', (event) => {
-		  d3.select('#tooltip')
-		    .style('display', 'block')
-		    .html(`<strong>${d.name}</strong><br>
-		          Population: ${Math.round(d.population).toLocaleString()}<br>
-		          Age groups:<br>
-		          0-14: ${Math.round(ageData[0].value * 100)}%<br>
-		          15-64: ${Math.round(ageData[1].value * 100)}%<br>
-		          65+: ${Math.round(ageData[2].value * 100)}%`)
-		    .style('left', `${event.pageX + 10}px`)
-		    .style('top', `${event.pageY - 30}px`);
-		})
-		.on('mouseout', () => {
-		  d3.select('#tooltip').style('display', 'none');
+		});    
 		});
 		
-		      // Draw pie segments
-		      g.selectAll('path')
-		.data(pie(ageData))
-		.enter()
-		.append('path')
-		.attr('d', arc)
-		.attr('fill', (d, i) => {
-		  const colors = ['#66c2a5', '#fc8d62', '#8da0cb'];
-		  return colors[i];
-		})
-		.attr('stroke', '#fff')
-		.attr('stroke-width', 0.5);
+		// Population dashboard logic
+		// Population dashboard logic
+		document.addEventListener('DOMContentLoaded', function() {
+		var rawData, years;
+		var trendChart = null;
+		var startYearChart = null;
+		var endYearChart = null;
+		
+		// 1. Load CSV
+		const popResponse = await fetch( 'https://raw.githubusercontent.com/carionb/Local/main/POPULATION.csv' ); const popCsvText = await popResponse.text();
+		    .then(function(r) { return r.text(); })
+		    .then(function(text) {
+		        var header = text.trim().split('\n')[0];
+		        var lines = text.trim().split('\n').slice(1);
+		        var cols = header.split(',').slice(1);
+		        rawData = lines.map(function(line) {
+		            var vals = line.split(',');
+		            var obj = { series: vals[0] };
+		            cols.forEach(function(col, i) {
+		                obj[col] = vals[i+1] === 'na' ? null : +vals[i+1];
+		            });
+		            return obj;
+		        });
+		        years = cols.filter(function(c) { return /^\d+$/.test(c); })
+		                   .map(function(y) { return +y; })
+		                   .sort(function(a, b) { return a - b; });
+		        initControls();
+		        updateDashboard();
 		    });
-		  }
+		
+		// Helper function to get values from data
+		function getVal(series, year) {
+		    var row = rawData.find(function(r) { return r.series === series; });
+		    return row ? row[year] : null;
 		}
 		
-		// ======= Land Use Map =======
-		function initLandUseMap() {
-		  const container = d3.select('#landuse-map');  // <- 去掉横杠
-		  if (container.empty()) {
-		    console.warn('Land use map container not found');
-		    return;
-		  }
-		  
-		  const svg = container.append('svg')
-		    .attr('width', '100%')
-		    .attr('height', '100%');
-		    
-		  // Initial update
-		  updateLandUseMap(2025);
-		}
+		// 2. Initialize selectors and toggle
+		function initControls() {
+		    var s = document.getElementById('startYear');
+		    var e = document.getElementById('endYear');
+		    var btn = document.getElementById('updateBtn');
+		    var tog = document.getElementById('toggleComposition');
 		
-		function updateLandUseMap(year) {
-		  const svg = d3.select('#landuse-map svg');
-		  if (svg.empty()) return;
-		  
-		  // Clear previous chart
-		  svg.selectAll('*').remove();
-		  
-		  // Find closest year data
-		  const yearData = landUseData.find(d => d.year <= year) || landUseData[landUseData.length - 1];
-		  if (!yearData) return;
-		  
-		  const width = svg.node().getBoundingClientRect().width;
-		  const height = svg.node().getBoundingClientRect().height;
-		  const radius = Math.min(width, height) / 2 - 20;
-		  
-		  const g = svg.append('g')
-		    .attr('transform', `translate(${width/2},${height/2})`);
-		  
-		  // Convert data for pie chart
-		  const pieData = Object.entries(yearData.usage).map(([key, value]) => ({
-		    category: key,
-		    value
-		  }));
-		  
-		  // Color scale
-		  const color = d3.scaleOrdinal()
-		    .domain(Object.keys(yearData.usage))
-		    .range(['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00']);
-		  
-		  // Create pie chart
-		  const pie = d3.pie()
-		    .value(d => d.value)
-		    .sort(null);
-		  
-		  const arc = d3.arc()
-		    .innerRadius(radius * 0.4)
-		    .outerRadius(radius * 0.8);
-		  
-		  const outerArc = d3.arc()
-		    .innerRadius(radius * 0.9)
-		    .outerRadius(radius * 0.9);
-		  
-		  // Draw pie segments
-		  const arcs = g.selectAll('.arc')
-		    .data(pie(pieData))
-		    .enter()
-		    .append('g')
-		    .attr('class', 'arc');
-		  
-		  arcs.append('path')
-		    .attr('d', arc)
-		    .attr('fill', d => color(d.data.category))
-		    .attr('stroke', '#fff')
-		    .attr('stroke-width', 1)
-		    .on('mouseover', (event, d) => {
-		      d3.select('#tooltip')
-		.style('display', 'block')
-		.html(`<strong>${d.data.category}</strong>: ${d.data.value}%`)
-		.style('left', `${event.pageX + 10}px`)
-		.style('top', `${event.pageY - 30}px`);
-		    })
-		    .on('mouseout', () => {
-		      d3.select('#tooltip').style('display', 'none');
+		    years.forEach(function(y) {
+		        s.add(new Option(y, y));
+		        e.add(new Option(y, y));
 		    });
-		  
-		  // Add labels and lines
-		  arcs.append('text')
-		    .attr('transform', d => {
-		      const pos = outerArc.centroid(d);
-		      pos[0] = radius * (midAngle(d) < Math.PI ? 1 : -1);
-		      return `translate(${pos})`;
-		    })
-		    .attr('dy', '.35em')
-		    .style('text-anchor', d => midAngle(d) < Math.PI ? 'start' : 'end')
-		    .text(d => `${d.data.category} (${d.data.value}%)`);
-		  
-		  // Add polylines connecting pie segments to labels
-		  arcs.append('polyline')
-		    .attr('points', d => {
-		      const pos = outerArc.centroid(d);
-		      pos[0] = radius * 0.95 * (midAngle(d) < Math.PI ? 1 : -1);
-		      return [arc.centroid(d), outerArc.centroid(d), pos];
-		    })
-		    .attr('stroke', '#000')
-		    .attr('fill', 'none')
-		    .attr('stroke-width', 0.5);
-		  
-		  // Add title
-		  svg.append('text')
-		    .attr('x', width/2)
-		    .attr('y', 20)
-		    .attr('text-anchor', 'middle')
-		    .style('font-size', '16px')
-		    .style('font-weight', 'bold')
-		    .text(`Land Use Distribution (${yearData.year})`);
-		  
-		  // Helper function to calculate angle for labels
-		  function midAngle(d) {
-		    return d.startAngle + (d.endAngle - d.startAngle) / 2;
-		  }
+		    s.value = years[Math.max(0, years.length - 20)];
+		    e.value = years[years.length - 1];
+		    btn.onclick = updateDashboard;
+		    tog.onchange = function() {
+		        document.getElementById('compositionContainer').style.display = tog.checked ? 'block' : 'none';
+		    };
 		}
 		
-		// ======= Animation =======
-		function playTimelineAnimation() {
-		  const startYear = 1965;
-		  const endYear = 2025;
-		  const duration = 10000; // 10 seconds
-		  const fps = 30;
-		  const framesCount = duration / 1000 * fps;
-		  const yearIncrement = (endYear - startYear) / framesCount;
-		  
-		  let currentFrame = 0;
-		  let currentYear = startYear;
-		  
-		  // Disable UI while animating
-		  document.querySelectorAll('.year-slider').forEach(slider => {
-		    slider.disabled = true;
-		  });
-		  
-		  const animationInterval = setInterval(() => {
-		    currentFrame++;
-		    currentYear += yearIncrement;
-		    
-		    if (currentFrame >= framesCount) {
-		      currentYear = endYear;
-		      clearInterval(animationInterval);
-		      
-		      // Re-enable UI
-		      document.querySelectorAll('.year-slider').forEach(slider => {
-		slider.disabled = false;
-		      });
+		// 3. Update all displays
+		function updateDashboard() {
+		    var startY = +document.getElementById('startYear').value;
+		    var endY = +document.getElementById('endYear').value;
+		    var span = years.filter(function(y) { return y >= startY && y <= endY; });
+		
+		    // 4. KPI cards
+		    var startPop = getVal('Total Population (Number)', startY);
+		    var endPop = getVal('Total Population (Number)', endY);
+		    document.getElementById('currentPopulation').textContent = 
+		        endPop != null ? endPop.toLocaleString() : '–';
+		    document.getElementById('populationChange').textContent = 
+		        (startPop && endPop) ? 
+		        ((endPop - startPop)/startPop*100).toFixed(1) + '%' : 'N/A';
+		
+		    var startAge = getVal('Median Age Of Resident Population (Years)', startY);
+		    var endAge = getVal('Median Age Of Resident Population (Years)', endY);
+		    document.getElementById('currentMedianAge').textContent = 
+		        endAge != null ? endAge : '–';
+		    document.getElementById('medianAgeChange').textContent = 
+		        (startAge && endAge) ? 
+		        (endAge - startAge).toFixed(1) + ' yrs' : 'N/A';
+		
+		    var startSr = getVal('Old-Age Support Ratio: Residents Aged 15-64 Years Per Resident Aged 65 Years & Over (Number)', startY);
+		    var endSr = getVal('Old-Age Support Ratio: Residents Aged 15-64 Years Per Resident Aged 65 Years & Over (Number)', endY);
+		    document.getElementById('currentSupportRatio').textContent = 
+		        endSr != null ? endSr : '–';
+		    document.getElementById('supportRatioChange').textContent = 
+		        (startSr && endSr) ? 
+		        (endSr - startSr).toFixed(1) : 'N/A';
+		
+		    // 5. Trend chart
+		    var ctx1 = document.getElementById('populationTrendChart').getContext('2d');
+		    if (trendChart) trendChart.destroy();
+		    trendChart = new Chart(ctx1, {
+		        type: 'line',
+		        data: {
+		            labels: span,
+		            datasets: [{
+		                label: 'Total Population',
+		                data: span.map(function(y) { return getVal('Total Population (Number)', y); }),
+		                borderColor: '#cc0000',
+		                fill: false,
+		                tension: 0.3
+		            }]
+		        },
+		        options: { responsive: true, maintainAspectRatio: false }
+		    });
+		
+		    // 6. Update composition charts
+		    updateCompositionCharts(startY, endY);
+		}
+		
+		function updateCompositionCharts(startY, endY) {
+		    // Obtain 2D drawing contexts from canvas elements
+		    var ctxStart = document.getElementById('startYearChart').getContext('2d');
+		    var ctxEnd = document.getElementById('endYearChart').getContext('2d');
+		
+		    // If charts already exist, destroy them to avoid memory leaks
+		    if (startYearChart) {
+		        startYearChart.destroy();
 		    }
-		    
-		    // Update sliders
-		    document.querySelectorAll('.year-slider').forEach(slider => {
-		      slider.value = Math.round(currentYear);
-		      
-		      const yearDisplayId = slider.id.replace('slider', 'year-display');
-		      const yearDisplayEl = document.getElementById(yearDisplayId);
-		      if (yearDisplayEl) {
-		yearDisplayEl.textContent = Math.round(currentYear);
-		      }
-		    });
-		    
-		    // Update visualizations
-		    updateAllVisualizationsByYear(Math.round(currentYear));
-		    
-		  }, 1000 / fps);
-		}
+		    if (endYearChart) {
+		        endYearChart.destroy();
+		    }
 		
-		function updateAllVisualizationsByYear(year) {
-		  updateOverviewMap(year);
-		  updateHDBChart(year);
-		  updateHDBMap(year);
-		  updatePopulationPyramid(year);
-		  updatePopulationMap(year, document.getElementById('pop-type-select')?.value || 'density');
-		  updateLandUseMap(year);
+		    // Helper: fetch the three population values for a given year
+		    function fetchCompositionData(year) {
+		        return [
+		            getVal('Singapore Citizen Population (Number)', year) || 0,
+		            getVal('Permanent Resident Population (Number)', year) || 0,
+		            getVal('Non-Resident Population (Number)', year) || 0
+		        ];
+		    }
+		
+		    // Helper: create a pie chart with title and data
+		    function createPieChart(ctx, data, title) {
+		        return new Chart(ctx, {
+		            type: 'pie',
+		            data: {
+		                labels: ['Citizens', 'PRs', 'Non-Residents'],
+		                datasets: [{
+		                    data: data,
+		                    backgroundColor: ['#2ecc71', '#f39c12', '#e74c3c']
+		                }]
+		            },
+		            options: {
+		                responsive: true,
+		                maintainAspectRatio: false,
+		                plugins: {
+		                    title: {
+		                        display: true,
+		                        text: title
+		                    }
+		                }
+		            }
+		        });
+		    }
+		
+		    // Build and store the new chart instances
+		    startYearChart = createPieChart(
+		        ctxStart,
+		        fetchCompositionData(startY),
+		        startY + ' Composition'
+		    );
+		
+		    endYearChart = createPieChart(
+		        ctxEnd,
+		        fetchCompositionData(endY),
+		        endY + ' Composition'
+		    );
 		}
+		});
 		
 	</script>
 </body>
