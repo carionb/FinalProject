@@ -561,6 +561,11 @@
 		    });
 		  });
 		
+		const DATA_SOURCES = { boundary: 'https://raw.githubusercontent.com/carionb/Local/main/MasterPlan2019RegionBoundaryNoSeaGEOJSON.geojson', 
+				      hdb: 'https://raw.githubusercontent.com/carionb/Local/main/HDB_description_floor_year.geojson', 
+				      population: 'https://raw.githubusercontent.com/carionb/Local/main/POPULATION.csv' 
+				     };
+		
 		  // =====================
 		  // 3D MAP INITIALIZATION
 		  // =====================
@@ -607,8 +612,12 @@
 		    
 		  try {
 		// 1) Load Singapore boundary - Add error handling
-		try {
-		  const sgBoundaryResponse = await fetch( 'https://raw.githubusercontent.com/carionb/Local/main/MasterPlan2019RegionBoundaryNoSeaGEOJSON.geojson' ); const sgBoundaryGeoJSON = await sgBoundaryResponse.json();
+		async function load3DData() {
+                  try {
+                      const [boundaryRes, hdbRes] = await Promise.all([
+                      fetch(DATA_SOURCES.boundary),
+                      fetch(DATA_SOURCES.hdb)
+                 ]);
 		  if (!sgBoundaryResponse.ok) {
 		    throw new Error(`Failed to load boundary: ${sgBoundaryResponse.status}`);
 		  }
@@ -867,7 +876,6 @@
 		});
 		
 		// Population dashboard logic
-		// Population dashboard logic
 		document.addEventListener('DOMContentLoaded', function() {
 		var rawData, years;
 		var trendChart = null;
@@ -875,7 +883,9 @@
 		var endYearChart = null;
 		
 		// 1. Load CSV
-		const popResponse = await fetch( 'https://raw.githubusercontent.com/carionb/Local/main/POPULATION.csv' ); const popCsvText = await popResponse.text();
+		async function loadPopulationData() {
+                try {
+                     const res = await fetch(DATA_SOURCES.population);
 		    .then(function(r) { return r.text(); })
 		    .then(function(text) {
 		        var header = text.trim().split('\n')[0];
