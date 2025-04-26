@@ -561,11 +561,6 @@
 		    });
 		  });
 		
-		const DATA_SOURCES = { boundary: 'https://raw.githubusercontent.com/carionb/Local/main/MasterPlan2019RegionBoundaryNoSeaGEOJSON.geojson', 
-				      hdb: 'https://raw.githubusercontent.com/carionb/Local/main/HDB_description_floor_year.geojson', 
-				      population: 'https://raw.githubusercontent.com/carionb/Local/main/POPULATION.csv' 
-				     };
-		
 		  // =====================
 		  // 3D MAP INITIALIZATION
 		  // =====================
@@ -612,12 +607,8 @@
 		    
 		  try {
 		// 1) Load Singapore boundary - Add error handling
-		async function load3DData() {
-                  try {
-                      const [boundaryRes, hdbRes] = await Promise.all([
-                      fetch(DATA_SOURCES.boundary),
-                      fetch(DATA_SOURCES.hdb)
-                 ]);
+		try {
+		  const sgBoundaryResponse = await fetch('https://raw.githubusercontent.com/carionb/Local/main/MasterPlan2019RegionBoundaryNoSeaGEOJSON.geojson');
 		  if (!sgBoundaryResponse.ok) {
 		    throw new Error(`Failed to load boundary: ${sgBoundaryResponse.status}`);
 		  }
@@ -646,7 +637,8 @@
 		// 2) Load HDB GeoJSON with better error handling
 		let hdbData;
 		try {
-		  const hdbResponse = await fetch( 'https://raw.githubusercontent.com/carionb/Local/main/HDB_description_floor_year.geojson' ); const hdbGeoJSON = await hdbResponse.json();
+		  const resp = await fetch('https://raw.githubusercontent.com/carionb/Local/main/HDB_description_floor_year.geojson');
+		
 		  if (!resp.ok) {
 		    throw new Error(`Failed to load HDB data: ${resp.status}`);
 		  }
@@ -775,7 +767,7 @@
 		
 		const p = e.features[0].properties;
 		
-		// Fix 
+		// fix 
 		const desc = parseDesc(p.descriptio || p.description || '');
 		const year = p.YEAR || p.year || 'N/A';
 		const floors = p.FLOOR || p.floor || 'N/A';
@@ -783,7 +775,7 @@
 		buildingInfo.innerHTML = `
 		  <div class="building-info-row">
 		    <div class="building-info-label">Block</div>
-		    <div class="building-info-value">${desc.block}</div> <!-- 使用 desc 而不是 d -->
+		    <div class="building-info-value">${desc.block}</div> 
 		  </div>
 		  <div class="building-info-row">
 		    <div class="building-info-label">Street</div>
@@ -883,9 +875,7 @@
 		var endYearChart = null;
 		
 		// 1. Load CSV
-		async function loadPopulationData() {
-                try {
-                     const res = await fetch(DATA_SOURCES.population);
+		fetch('https://raw.githubusercontent.com/carionb/Local/main/POPULATION.csv')
 		    .then(function(r) { return r.text(); })
 		    .then(function(text) {
 		        var header = text.trim().split('\n')[0];
