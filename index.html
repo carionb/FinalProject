@@ -138,106 +138,233 @@
 		
 		/* Control Panel */
 		.control-panel {
-		  position: absolute;
-		  top: 20px;
-		  left: 20px;
-		  background: rgba(255,255,255,0.9);
-		  padding: 16px;
-		  border-radius: 12px;
-		  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-		  z-index: 2;
-		  min-width: 260px;
-		}
+		      position:absolute; top:20px; left:20px;
+		      background:rgba(255,255,255,0.9);
+		      padding:16px; border-radius:12px;
+		      box-shadow:0 4px 16px rgba(0,0,0,0.2);
+		      z-index:2; min-width:280px;
+		      transition: all 0.3s ease;
+		    }
+		    .control-panel.collapsed {
+		      width: 40px;
+		      min-width: 40px;
+		      padding: 10px;
+		      border-radius: 50%;
+		    }
+		    .control-group { 
+		      margin-bottom:16px; 
+		      transition: opacity 0.3s ease;
+		    }
+		    .control-panel.collapsed .control-group {
+		      opacity: 0;
+		      height: 0;
+		      overflow: hidden;
+		      margin: 0;
+		    }
 		
-		.control-group {
-		  margin-bottom: 16px;
+		        .control-panel.collapsed .value-display,
+		.control-panel.collapsed .decade-markers {
+		  display: none;
 		}
 		
 		.control-label {
-		  display: block;
-		  margin-bottom: 8px;
-		  font-size: 15px;
-		  color: #444;
-		  font-weight: 600;
+		  position: relative;
+		  z-index: 1;
+		  display:block; margin-bottom:8px;
+		      font-size:15px; color:#444; font-weight:600;
 		}
 		
-		.slider {
-		  width: 100%;
-		}
-		
-		.value-display {
-		  float: right;
-		  font-weight: 500;
-		  color: #333;
-		}
-		
-		/* Remote-Style Controls */
-		.remote-controls {
-		  display: grid;
-		  grid-template:
-		    "up    up    up"      40px
-		    "left reset right"    40px
-		    "down  down  down"    40px
-		    / 60px  60px  60px;
-		  gap: 8px;
-		  justify-items: center;
-		}
-		
-		.remote-controls button {
-		  border: none;
-		  border-radius: 8px;
-		  background: linear-gradient(135deg,#4a90e2,#357abd);
-		  cursor: pointer;
-		  width: 100%;
-		  height: 100%;
-		  display: flex;
-		  align-items: center;
-		  justify-content: center;
-		  transition: background .2s,transform .2s;
-		}
-		
-		.remote-controls button:hover {
-		  background: linear-gradient(135deg,#357abd,#2a5a8f);
-		  transform: scale(1.1);
-		}
-		
-		#tilt-up     { grid-area: up; }
-		#reset-view  { grid-area: reset; }
-		#tilt-down   { grid-area: down; }
-		#rotate-left { grid-area: left; }
-		#rotate-right{ grid-area: right; }
-		
-		.remote-controls svg {
-		  width: 16px;
-		  height: 16px;
-		  fill: rgba(255,255,255,0.9);
-		}
-		
-		/* Legend */
-		.legend {
+		#year-value {
 		  position: absolute;
-		  bottom: 30px;
-		  left: 20px;
-		  background: rgba(255,255,255,0.9);
-		  padding: 12px;
-		  border-radius: 8px;
-		  font-size: 13px;
-		  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-		  z-index: 2;
 		}
 		
-		.legend-item {
-		  display: flex;
-		  align-items: center;
-		  margin-bottom: 6px;
-		}
+		   
+		    .slider { width:100%; }
+		    .value-display {
+		      float:right; font-weight:500; color:#333;
+		    }
+		    
+		    /* Toggle Button */
+		    .toggle-panel {
+		      position: absolute;
+		      top: 2px;
+		      right: 2px;
+		      width: 28px;
+		      height: 28px;
+		      display: flex;
+		      align-items: center;
+		      justify-content: center;
+		      background: #4a90e2;
+		      border: none;
+		      border-radius: 50%;
+		      cursor: pointer;
+		      color: white;
+		      font-weight: bold;
+		      transition: all 0.3s ease;
+		      margin: 4px;
+		      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+		      z-index: 3;
+		    }
+		    .toggle-panel:hover {
+		      background: #357abd;
+		      transform: scale(1.1);
+		    }
+		    .control-panel.collapsed .toggle-panel {
+		      transform: rotate(180deg);
+		    }
 		
-		.legend-color {
-		  width: 16px;
-		  height: 16px;
-		  margin-right: 8px;
-		  border-radius: 3px;
+		    /* ====================
+		       Remote-Style Controls
+		       ==================== */
+		    .view-mode-selector {
+		      display: flex;
+		      margin-bottom: 12px;
+		      border-radius: 8px;
+		      overflow: hidden;
+		      border: 1px solid #ddd;
+		    }
+		    .view-mode-btn {
+		      flex: 1;
+		      padding: 8px 4px;
+		      background: #f5f5f5;
+		      border: none;
+		      font-size: 12px;
+		      font-weight: 600;
+		      cursor: pointer;
+		      transition: all 0.2s;
+		    }
+		    .view-mode-btn.active {
+		      background: #4a90e2;
+		      color: white;
+		    }
+		    .view-mode-btn:not(:last-child) {
+		      border-right: 1px solid #ddd;
+		    }
+		    .view-mode-btn:hover:not(.active) {
+		      background: #e5e5e5;
+		    }
+		    
+		    .remote-controls {
+		      display:grid;
+		      grid-template:
+		        "up    up    up"      40px
+		        "left reset right"    40px
+		        "down  down  down"    40px
+		        / 60px  60px  60px;
+		      gap:8px; justify-items:center;
+		    }
+		    .remote-controls button {
+		      border:none; border-radius:8px;
+		      background:linear-gradient(135deg,#4a90e2,#357abd);
+		      cursor:pointer; width:100%; height:100%;
+		      display:flex; align-items:center; justify-content:center;
+		      transition:background .2s,transform .2s;
+		    }
+		    .remote-controls button:hover {
+		      background:linear-gradient(135deg,#357abd,#2a5a8f);
+		      transform:scale(1.1);
+		    }
+		    #tilt-up     { grid-area: up;     }
+		    #reset-view  { grid-area: reset;  }
+		    #tilt-down   { grid-area: down;   }
+		    #rotate-left { grid-area: left;   }
+		    #rotate-right{ grid-area: right;  }
+		    .remote-controls svg {
+		      width:16px; height:16px; fill:rgba(255,255,255,0.9);
+		    }
+		
+		    /* =======================
+		       Timeline Decade Markers
+		       ======================= */
+		           .timeline-container {
+		  position: relative;
+		  padding-top: 30px;
+		  margin-top: 10px;
 		}
+		    .decade-markers {
+		      display: flex;
+		      justify-content: space-between;
+		      margin-bottom: 5px;
+		      padding: 0 2px;
+		    }
+		    .decade-marker {
+		      font-size: 10px;
+		      color: #666;
+		      position: relative;
+		      text-align: center;
+		      cursor: pointer;
+		      font-weight: 500;
+		    }
+		    .decade-marker:hover {
+		      color: #4a90e2;
+		    }
+		    .decade-marker::after {
+		      content: '';
+		      position: absolute;
+		      height: 6px;
+		      width: 2px;
+		      background: #999;
+		      bottom: -8px;
+		      left: 50%;
+		      transform: translateX(-50%);
+		    }
+		
+		    /* =========
+		       Legend
+		       ========= */
+		    .legend {
+		      position:absolute; bottom:80px; right:10px;
+		      background:rgba(255,255,255,0.9);
+		      padding:12px; border-radius:8px;
+		      font-size:13px; box-shadow:0 4px 12px rgba(0,0,0,0.15);
+		      z-index:2;
+		      transition: all 0.3s ease;
+		    }
+		    .legend-item {
+		      display:flex; align-items:center; margin-bottom:6px;
+		    }
+		    .legend-color {
+		      width:16px; height:16px; margin-right:8px;
+		      border-radius:3px;
+		    }
+		    .legend.collapsed {
+		      transform: translateY(calc(100% - 36px));
+		    }
+		    .legend-header {
+		      display: flex;
+		      justify-content: space-between;
+		      align-items: center;
+		      margin-bottom: 8px;
+		      cursor: pointer;
+		    }
+		    .legend-header h3 {
+		      margin: 0;
+		      font-size: 14px;
+		    }
+		    .legend-content {
+		      transition: max-height 0.3s ease, opacity 0.3s ease;
+		      max-height: 300px;
+		      overflow: hidden;
+		      opacity: 1;
+		    }
+		    .legend.collapsed .legend-content {
+		      max-height: 0;
+		      opacity: 0;
+		    }
+		    .toggle-legend {
+		      width: 18px;
+		      height: 18px;
+		      display: flex;
+		      align-items: center;
+		      justify-content: center;
+		      border-radius: 50%;
+		      background: #eee;
+		      cursor: pointer;
+		      transition: transform 0.3s ease;
+		    }
+		    .legend.collapsed .toggle-legend {
+		      transform: rotate(180deg);
+		    }
 		
 		 /* info panel */
 		  .building-info-panel {
@@ -277,6 +404,49 @@
 		text-align: center;
 		padding: 8px 0;
 		  }
+		
+		       /* ================
+		       Statistics Panel
+		       ================*/
+		    .stats-panel {
+		      position: absolute;
+		      top: 50px;
+		      right: 10px;
+		      background: rgba(255,255,255,0.9);
+		      padding: 12px;
+		      border-radius: 8px;
+		      font-size: 13px;
+		      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+		      z-index: 2;
+		      min-width: 180px;
+		      transition: all 0.3s ease;
+		    }
+		    .stats-header {
+		      display: flex;
+		      justify-content: space-between;
+		      align-items: center;
+		      margin-bottom: 8px;
+		      cursor: pointer;
+		    }
+		    .stats-header h3 {
+		      margin: 0;
+		      font-size: 14px;
+		    }
+		    .stats-content {
+		      transition: max-height 0.3s ease, opacity 0.3s ease;
+		      max-height: 300px;
+		      overflow: hidden;
+		      opacity: 1;
+		    }
+		    
+		    .stat-item {
+		      display: flex;
+		      justify-content: space-between;
+		      margin-bottom: 6px;
+		    }
+		    .stat-value {
+		      font-weight: 600;
+		    }
 		
 	</style>
 </head>
@@ -328,15 +498,61 @@
 					<!-- Map Container -->
 					<div id="map-container" class="relative" style="height: 600px;">
 						<div id="map" style="height: 100%; width: 100%;"></div>
+						<!-- Statistics Panel -->
+						<div class="stats-panel" id="stats-panel">
+							<div class="stats-header">
+								<h3>HDB Statistics</h3>
+							</div>
+							<div class="stats-content">
+								<div class="stat-item">
+									<span>Total Buildings:</span>
+									<span id="stat-total" class="stat-value">-</span>
+								</div>
+								<div class="stat-item">
+									<span>Current View:</span>
+									<span id="stat-current" class="stat-value">-</span>
+								</div>
+								<div class="stat-item">
+									<span>Avg Floor Count:</span>
+									<span id="stat-avg-floor" class="stat-value">-</span>
+								</div>
+								<div class="stat-item">
+									<span>Latest Year:</span>
+									<span id="stat-latest" class="stat-value">-</span>
+								</div>
+							</div>
+						</div>
 						<!-- Control Panel -->
-						<div class="control-panel">
+						<div class="control-panel" id="control-panel">
+							<button class="toggle-panel" id="toggle-panel" title="Toggle Panel">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+									<path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path>
+								</svg>
+							</button>
 							<div class="control-group">
-								<label class="control-label"> Year Filter <span id="year-value" class="value-display"></span>
+								<label class="control-label"> Year Filter <span id="year-value" class="value-display" style="margin-left: 8px;"></span>
 								</label>
-								<input type="range" id="year-slider" class="slider" />
+								<div class="timeline-container">
+									<div class="decade-markers">
+										<span class="decade-marker" data-year="1960">1960s</span>
+										<span class="decade-marker" data-year="1970">1970s</span>
+										<span class="decade-marker" data-year="1980">1980s</span>
+										<span class="decade-marker" data-year="1990">1990s</span>
+										<span class="decade-marker" data-year="2000">2000s</span>
+										<span class="decade-marker" data-year="2010">2010s</span>
+										<span class="decade-marker" data-year="2020">2020s</span>
+									</div>
+									<input type="range" id="year-slider" class="slider" />
+								</div>
 							</div>
 							<div class="control-group">
-								<div class="control-label">3D Remote Controls</div>
+								<div class="control-label">View Mode:</div>
+								<div class="view-mode-selector">
+									<button class="view-mode-btn" data-mode="chronological">Chronological</button>
+									<button class="view-mode-btn" data-mode="density">Density</button>
+									<button class="view-mode-btn" data-mode="height">Height</button>
+								</div>
+								<div class="control-label" style="margin-top: 12px;">3D Remote Controls</div>
 								<div class="remote-controls">
 									<button id="tilt-up" title="Tilt Up">
 										<svg viewBox="0 0 24 24">
@@ -365,24 +581,35 @@
 									</button>
 								</div>
 							</div>
-							<div class="building-info-panel">
-								<h3><i class="fas fa-info-circle"></i> Building Information</h3>
-								<div id="building-info" class="building-info-content">
-									<div class="no-building-selected"> Hover over a building to see details </div>
+							<div class="control-group">
+								<div class="building-info-panel">
+									<h3><i class="fas fa-info-circle"></i> Building Information</h3>
+									<div id="building-info" class="building-info-content">
+										<div class="no-building-selected"> Hover over a building to see details </div>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
-					<!-- Legend -->
-					<div class="legend">
-						<div class="legend-item">
-							<div class="legend-color" style="background:#cccccc"></div>Buildings
-						</div>
-						<div class="legend-item">
-							<div class="legend-color" style="background:#ffeb3b"></div>Hover Highlight
-						</div>
-					</div>
-				</div>
+						<!-- Legend -->
+						<div class="legend" id="legend">
+							<div class="legend-header">
+								<h3>Legend</h3>
+								<div class="toggle-legend" id="toggle-legend">
+									<svg width="12" height="12" viewBox="0 0 24 24" fill="#444">
+										<path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path>
+									</svg>
+								</div>
+							</div>
+							<div class="legend-content">
+								<div class="legend-item">
+									<div class="legend-color" style="background:#cccccc"></div>Buildings
+								</div>
+								<div class="legend-item">
+									<div class="legend-color" style="background:#ffeb3b"></div>Hover Highlight
+								</div>
+								<div id="mode-legend" style="display:none;">
+								</div>
+							</div>
 			</section>
 			<!-- Population -->
 			<section id="population" class="bg-white p-8 rounded shadow">
@@ -566,19 +793,69 @@
 		  // =====================
 		  
 		  // Initial view constants
-		  const initialCenter = [103.8, 1.35];
-		  const initialZoom = 10;
-		  const initialPitch = 0;
+		  const initialCenter  = [103.8, 1.35];
+		  const initialZoom    = 10;
+		  const initialPitch   = 0;
 		  const initialBearing = 0;
-		  const pitchStep = 15;
-		  const bearingStep = 45;
-		  let currentPitch = initialPitch;
+		  const pitchStep      = 15;
+		  const bearingStep    = 45;
+		  let currentPitch     = initialPitch;
+		  let currentViewMode  = null;
+		  let hdbData = null;
+		  let totalBuildings = 0;
+		  let currentViewBuildings = 0;
+		  let avgFloors = 0;
+		  let latestYear = 0;
+		  let hideTimeout = null;
+		  let userManuallyToggled = false; // Track if user manually toggled panels
 		
 		  // Helper: decode HTML entities
 		  function decodeEntities(str) {
 		    const txt = document.createElement('textarea');
 		    txt.innerHTML = str;
 		    return txt.value;
+		  }
+		
+		  // Helper: parse description from HTML
+		  function parseDesc(descHtml) {
+		    if (!descHtml) return { block: 'N/A', street: 'N/A' };
+		    
+		    try {
+		      const decoded = decodeEntities(descHtml);
+		      const tempDiv = document.createElement('div');
+		      tempDiv.innerHTML = decoded;
+		      
+		      // Try to find block and street information
+		      const rows = tempDiv.querySelectorAll('tr');
+		      let block = 'N/A';
+		      let street = 'N/A';
+		      
+		      rows.forEach(row => {
+		        const header = row.querySelector('th')?.textContent.toLowerCase();
+		        const value = row.querySelector('td')?.textContent;
+		        
+		        if (header && value) {
+		          if (header.includes('blk') || header.includes('block')) {
+		            block = value;
+		          } else if (header.includes('street')) {
+		            street = value;
+		          }
+		        }
+		      });
+		      
+		      return { block, street };
+		    } catch (err) {
+		      console.error('Error parsing description:', err);
+		      return { block: 'N/A', street: 'N/A' };
+		    }
+		  }
+		
+		  // Update statistics display
+		  function updateStatistics(total, current, avgFloor, latest) {
+		    document.getElementById('stat-total').textContent = total.toLocaleString();
+		    document.getElementById('stat-current').textContent = current.toLocaleString();
+		    document.getElementById('stat-avg-floor').textContent = avgFloor;
+		    document.getElementById('stat-latest').textContent = latest;
 		  }
 		
 		  // Initialize map as flat 2D Singapore-wide view
@@ -599,272 +876,576 @@
 		  );
 		  // Add scale bar
 		  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
+		  
+		  // Setup collapsible panels - FIXED TOGGLE FUNCTIONALITY
+		  function setupPanelToggles() {
+		    // Control panel toggle
+		    const controlPanel = document.getElementById('control-panel');
+		    const togglePanelBtn = document.getElementById('toggle-panel');
+		    
+		    if (togglePanelBtn) {
+		      togglePanelBtn.addEventListener('click', function(e) {
+		        e.stopPropagation(); // Prevent event bubbling
+		        userManuallyToggled = true; // User manually toggled
+		        controlPanel.classList.toggle('collapsed');
+		        resetHideTimer();
+		      });
+		    }
+		    
+		    // Legend panel toggle
+		    const legendPanel = document.getElementById('legend');
+		    const toggleLegendBtn = document.getElementById('toggle-legend');
+		    
+		    if (toggleLegendBtn) {
+		      toggleLegendBtn.addEventListener('click', function(e) {
+		        e.stopPropagation(); // Prevent event bubbling
+		        userManuallyToggled = true; // User manually toggled
+		        legendPanel.classList.toggle('collapsed');
+		        resetHideTimer();
+		      });
+		    }
+		  }
 		
 		  map.on('load', async () => {
-		
 		    document.getElementById('map').addEventListener('wheel', e => e.stopPropagation());
 		    document.getElementById('map').addEventListener('touchmove', e => e.stopPropagation());
 		    
-		  try {
-		// 1) Load Singapore boundary - Add error handling
-		try {
-		  const sgBoundaryResponse = await fetch('https://raw.githubusercontent.com/carionb/Local/main/MasterPlan2019RegionBoundaryNoSeaGEOJSON.geojson');
-		  if (!sgBoundaryResponse.ok) {
-		    throw new Error(`Failed to load boundary: ${sgBoundaryResponse.status}`);
-		  }
-		  const sgBoundaryData = await sgBoundaryResponse.json();
-		  
-		  map.addSource('sg-boundary', {
-		    type: 'geojson',
-		    data: sgBoundaryData
-		  });
-		  
-		  map.addLayer({
-		    id: 'sg-boundary-line',
-		    type: 'line',
-		    source: 'sg-boundary',
-		    paint: {
-		      'line-color': '#0a0a0a',
-		      'line-width': 1
+		    // Call the panel toggle setup function
+		    setupPanelToggles();
+		    
+		    try {
+		      // 1) Load Singapore boundary - Add error handling
+		      try {
+		        const sgBoundaryResponse = await fetch('https://raw.githubusercontent.com/carionb/Local/main/MasterPlan2019RegionBoundaryNoSeaGEOJSON.geojson');
+		        if (!sgBoundaryResponse.ok) {
+		          throw new Error(`Failed to load boundary: ${sgBoundaryResponse.status}`);
+		        }
+		        const sgBoundaryData = await sgBoundaryResponse.json();
+		        
+		        map.addSource('sg-boundary', {
+		          type: 'geojson',
+		          data: sgBoundaryData
+		        });
+		        
+		        map.addLayer({
+		          id: 'sg-boundary-line',
+		          type: 'line',
+		          source: 'sg-boundary',
+		          paint: {
+		            'line-color': '#0a0a0a',
+		            'line-width': 1
+		          }
+		        });
+		        console.log('Singapore boundary loaded successfully');
+		      } catch (err) {
+		        console.warn('Error loading Singapore boundary:', err);
+		        // Continue anyway - this isn't critical for tooltips
+		      }
+		      
+		      // 2) Load HDB GeoJSON with better error handling
+		      try {
+		        const resp = await fetch('https://raw.githubusercontent.com/carionb/Local/main/HDB_description_floor_year.geojson');
+		      
+		        if (!resp.ok) {
+		          throw new Error(`Failed to load HDB data: ${resp.status}`);
+		        }
+		        hdbData = await resp.json();
+		        console.log('HDB data loaded successfully');
+		        
+		        // Calculate statistics
+		        totalBuildings = hdbData.features.length;
+		        
+		        const years = hdbData.features
+		          .map(f => f.properties.YEAR || f.properties.year)
+		          .filter(y => y && y >= 1950 && y <= 2024);
+		        latestYear = Math.max(...years);
+		        
+		        const floors = hdbData.features
+		          .map(f => f.properties.FLOOR || f.properties.floor || 1)
+		          .filter(f => f);
+		        avgFloors = Math.round(floors.reduce((sum, f) => sum + f, 0) / floors.length * 10) / 10;
+		        
+		        // Update statistics panel
+		        updateStatistics(totalBuildings, totalBuildings, avgFloors, latestYear);
+		        
+		        map.addSource('hdb', {
+		          type: 'geojson',
+		          data: hdbData,
+		          generateId: true
+		        });
+		        
+		        // 3) Year slider setup
+		        const minY = Math.min(...years), maxY = Math.max(...years);
+		        const slider = document.getElementById('year-slider');
+		        const label  = document.getElementById('year-value');
+		        slider.min = minY; slider.max = maxY; slider.value = maxY;
+		        label.textContent = maxY;
+		      
+		        // 4) Single extrusion layer with color expression for hover
+		        map.addLayer({
+		          id: 'hdb-3d',
+		          type: 'fill-extrusion',
+		          source: 'hdb',
+		          paint: {
+		            // Default to gray buildings
+		            'fill-extrusion-color': [
+		              'case',
+		              ['boolean', ['feature-state','hover'], false],
+		              '#ffeb3b',
+		              '#cccccc'
+		            ],
+		            'fill-extrusion-height': ['*',
+		              ['coalesce', ['get','FLOOR'], ['get','floor'], 1], 3
+		            ],
+		            'fill-extrusion-opacity': 0.85,
+		            'fill-extrusion-vertical-gradient': true
+		          }
+		        });
+		        
+		        // Year filter function
+		        function setYearFilter(year) {
+		          map.setFilter('hdb-3d', [
+		            '<=', ['coalesce',['get','YEAR'],['get','year'], 0], year
+		          ]);
+		          
+		          // Update statistics for current view
+		          const filteredFeatures = hdbData.features.filter(f => {
+		            const buildingYear = f.properties.YEAR || f.properties.year || 0;
+		            return buildingYear <= year;
+		          });
+		          
+		          currentViewBuildings = filteredFeatures.length;
+		          
+		          const filteredFloors = filteredFeatures
+		            .map(f => f.properties.FLOOR || f.properties.floor || 1);
+		          const filteredAvgFloors = Math.round(filteredFloors.reduce((sum, f) => sum + f, 0) / filteredFloors.length * 10) / 10;
+		          
+		          updateStatistics(totalBuildings, currentViewBuildings, filteredAvgFloors, year);
+		        }
+		        
+		        // 6) Year filter slider event
+		        slider.oninput = e => {
+		          const y = +e.target.value;
+		          label.textContent = y;
+		          setYearFilter(y);
+		        };
+		      
+		        // Decade markers
+		        const decadeMarkers = document.querySelectorAll('.decade-marker');
+		        decadeMarkers.forEach(marker => {
+		          marker.addEventListener('click', (e) => {
+		            const year = parseInt(e.target.dataset.year) + 9; // End of decade
+		            slider.value = year;
+		            label.textContent = year;
+		            setYearFilter(year);
+		          });
+		        });
+		        
+		      } catch (err) {
+		        console.warn('Error loading HDB data:', err);
+		        // Fallback to test data so tooltip can be demonstrated
+		        console.log('Using fallback test HDB data');
+		        hdbData = {
+		          "type": "FeatureCollection",
+		          "features": [
+		            {
+		              "type": "Feature",
+		              "properties": {
+		                "FLOOR": 12,
+		                "YEAR": 1985,
+		                "descriptio": "<table><tr><th>BLK_NO</th><td>123</td></tr><tr><th>STREET</th><td>Clementi Road</td></tr></table>"
+		              },
+		              "geometry": {
+		                "type": "Polygon",
+		                "coordinates": [[[103.8, 1.35], [103.81, 1.35], [103.81, 1.36], [103.8, 1.36], [103.8, 1.35]]]
+		              }
+		            },
+		            {
+		              "type": "Feature",
+		              "properties": {
+		                "floor": 25,
+		                "year": 2005,
+		                "descriptio": "<table><tr><th>Blk_No</th><td>456</td></tr><tr><th>Street</th><td>Orchard Road</td></tr></table>"
+		              },
+		              "geometry": {
+		                "type": "Polygon",
+		                "coordinates": [[[103.82, 1.37], [103.83, 1.37], [103.83, 1.38], [103.82, 1.38], [103.82, 1.37]]]
+		              }
+		            }
+		          ]
+		        };
+		        
+		        // Create fallback years array
+		        const years = [1985, 2005];
+		        latestYear = 2005;
+		        totalBuildings = 2;
+		        avgFloors = 18.5;
+		        
+		        map.addSource('hdb', {
+		          type: 'geojson',
+		          data: hdbData,
+		          generateId: true
+		        });
+		        
+		        // Add fallback slider
+		        const minY = 1985, maxY = 2005;
+		        const slider = document.getElementById('year-slider');
+		        const label  = document.getElementById('year-value');
+		        slider.min = minY; slider.max = maxY; slider.value = maxY;
+		        label.textContent = maxY;
+		        
+		        // Add fallback layer
+		        map.addLayer({
+		          id: 'hdb-3d',
+		          type: 'fill-extrusion',
+		          source: 'hdb',
+		          paint: {
+		            'fill-extrusion-color': [
+		              'case',
+		              ['boolean', ['feature-state','hover'], false],
+		              '#ffeb3b',
+		              '#cccccc'
+		            ],
+		            'fill-extrusion-height': ['*',
+		              ['coalesce', ['get','FLOOR'], ['get','floor'], 1], 3
+		            ],
+		            'fill-extrusion-opacity': 0.85,
+		            'fill-extrusion-vertical-gradient': true
+		          }
+		        });
+		        
+		        // Update statistics for fallback
+		        updateStatistics(totalBuildings, totalBuildings, avgFloors, latestYear);
+		        
+		        // Year filter function
+		        function setYearFilter(year) {
+		          map.setFilter('hdb-3d', [
+		            '<=', ['coalesce',['get','YEAR'],['get','year'], 0], year
+		          ]);
+		          
+		          const filteredFeatures = hdbData.features.filter(f => {
+		            const buildingYear = f.properties.YEAR || f.properties.year || 0;
+		            return buildingYear <= year;
+		          });
+		          
+		          currentViewBuildings = filteredFeatures.length;
+		          
+		          const filteredFloors = filteredFeatures
+		            .map(f => f.properties.FLOOR || f.properties.floor || 1);
+		          const filteredAvgFloors = Math.round(filteredFloors.reduce((sum, f) => sum + f, 0) / filteredFloors.length * 10) / 10;
+		          
+		          updateStatistics(totalBuildings, currentViewBuildings, filteredAvgFloors, year);
+		        }
+		        
+		        // Add fallback year filter
+		        slider.oninput = e => {
+		          const y = +e.target.value;
+		          label.textContent = y;
+		          setYearFilter(y);
+		        };
+		      }
+		      
+		      // Hover interaction with better error handling
+		      let hoveredId = null;
+		      const buildingInfo = document.getElementById('building-info');
+		      
+		      map.on('mousemove', 'hdb-3d', (e) => {
+		        try {
+		          if (e.features.length === 0) return;
+		          
+		          if (hoveredId !== null) {
+		            map.setFeatureState({ source: 'hdb', id: hoveredId }, { hover: false });
+		          }
+		          
+		          hoveredId = e.features[0].id;
+		          map.setFeatureState({ source: 'hdb', id: hoveredId }, { hover: true });
+		          
+		          const p = e.features[0].properties;
+		          
+		          const desc = parseDesc(p.descriptio || p.description || '');
+		          const year = p.YEAR || p.year || 'N/A';
+		          const floors = p.FLOOR || p.floor || 'N/A';
+		          
+		          buildingInfo.innerHTML = `
+		            <div class="building-info-row">
+		              <div class="building-info-label">Block</div>
+		              <div class="building-info-value">${desc.block}</div> 
+		            </div>
+		            <div class="building-info-row">
+		              <div class="building-info-label">Street</div>
+		              <div class="building-info-value">${desc.street}</div>
+		            </div>
+		            <div class="building-info-row">
+		              <div class="building-info-label">Year</div>
+		              <div class="building-info-value">${year}</div>
+		            </div>
+		            <div class="building-info-row">
+		              <div class="building-info-label">Floors</div>
+		              <div class="building-info-value">${floors}</div>
+		            </div>
+		          `;
+		          
+		        } catch (err) {
+		          console.error('Error in mousemove handler:', err);
+		          
+		          buildingInfo.innerHTML = `
+		            <div class="no-building-selected">
+		              Information currently unavailable
+		            </div>
+		          `;
+		        }
+		      });
+		      
+		      map.on('mouseleave', 'hdb-3d', () => {
+		        try {
+		          if (hoveredId !== null) {
+		            map.setFeatureState({ source: 'hdb', id: hoveredId }, { hover: false });
+		          }
+		          hoveredId = null;
+		          buildingInfo.innerHTML = `
+		            <div class="no-building-selected">
+		              Hover over a building to see details
+		            </div>
+		          `;
+		        } catch (err) {
+		          console.error('Error in mouseleave handler:', err);
+		        }
+		      });
+		      
+		      // 7) Remote-control actions
+		      function ease(opts){ map.easeTo(Object.assign({ duration:500 }, opts)); }
+		      document.getElementById('tilt-up').onclick = () => {
+		        currentPitch = Math.min(85, currentPitch + pitchStep);
+		        ease({ pitch: currentPitch });
+		        resetHideTimer();
+		      };
+		      document.getElementById('tilt-down').onclick = () => {
+		        currentPitch = Math.max(0, currentPitch - pitchStep);
+		        ease({ pitch: currentPitch });
+		        resetHideTimer();
+		      };
+		      document.getElementById('reset-view').onclick = () => {
+		        currentPitch = initialPitch;
+		        
+		        // Reset view mode buttons
+		        const viewModeButtons = document.querySelectorAll('.view-mode-btn');
+		        viewModeButtons.forEach(b => b.classList.remove('active'));
+		        
+		        // Reset building colors to original state
+		        map.setPaintProperty('hdb-3d', 'fill-extrusion-color', [
+		          'case',
+		          ['boolean', ['feature-state','hover'], false],
+		          '#ffeb3b',
+		          '#cccccc' 
+		        ]);
+		        
+		        // Reset legend display
+		        const modeLegend = document.getElementById('mode-legend');
+		        modeLegend.innerHTML = '';
+		        modeLegend.style.display = 'none';
+		        
+		        // Reset camera position
+		        ease({
+		          center: initialCenter,
+		          zoom: initialZoom,
+		          pitch: initialPitch,
+		          bearing: initialBearing,
+		          duration: 1000
+		        });
+		        
+		        // Reset timeline filter
+		        const slider = document.getElementById('year-slider');
+		        const label = document.getElementById('year-value');
+		        slider.value = latestYear;
+		        label.textContent = latestYear;
+		        setYearFilter(latestYear);
+		        
+		        // Reset statistics display
+		        updateStatistics(totalBuildings, totalBuildings, avgFloors, latestYear);
+		        
+		        // Ensure panels are expanded
+		        document.getElementById('control-panel').classList.remove('collapsed');
+		        document.getElementById('legend').classList.remove('collapsed');
+		        userManuallyToggled = false; // Reset toggle state
+		        resetHideTimer();
+		      };
+		      document.getElementById('rotate-right').onclick = () => {
+		        ease({ bearing: map.getBearing() - bearingStep });
+		        resetHideTimer();
+		      };
+		      document.getElementById('rotate-left').onclick = () => {
+		        ease({ bearing: map.getBearing() + bearingStep });
+		        resetHideTimer();
+		      };
+		      
+		      // 8) View Mode Selector
+		      const viewModeButtons = document.querySelectorAll('.view-mode-btn');
+		      viewModeButtons.forEach(btn => {
+		        btn.addEventListener('click', (e) => {
+		          // Remove active class from all buttons
+		          viewModeButtons.forEach(b => b.classList.remove('active'));
+		          // Add active class to clicked button
+		          e.target.classList.add('active');
+		          
+		          // Update view mode
+		          const mode = e.target.dataset.mode;
+		          updateViewMode(mode);
+		          resetHideTimer();
+		        });
+		      });
+		      
+		      // Update view mode (chronological, density, height)
+		      function updateViewMode(mode) {
+		        currentViewMode = mode;
+		        const modeLegend = document.getElementById('mode-legend');
+		        
+		        // Update building colors based on mode
+		        if (mode === 'chronological') {
+		          map.setPaintProperty('hdb-3d', 'fill-extrusion-color', [
+		            'case',
+		            ['boolean', ['feature-state','hover'], false],
+		            '#ffeb3b',
+		            [
+		              'interpolate',
+		              ['linear'],
+		              ['coalesce', ['get', 'YEAR'], ['get', 'year'], 1960],
+		              1960, '#1a237e', // Dark blue for oldest
+		              1980, '#7e57c2', // Purple for middle
+		              2000, '#26a69a', // Teal for newer
+		              2020, '#ffc107'  // Yellow for newest
+		            ]
+		          ]);
+		          
+		          // Update legend
+		          modeLegend.innerHTML = `
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#1a237e"></div>1960s
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#7e57c2"></div>1980s
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#26a69a"></div>2000s
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#ffc107"></div>2020s
+		            </div>
+		          `;
+		          modeLegend.style.display = 'block';
+		        } 
+		        else if (mode === 'density') {
+		          // Use building proximity/density
+		          map.setPaintProperty('hdb-3d', 'fill-extrusion-color', [
+		            'case',
+		            ['boolean', ['feature-state','hover'], false],
+		            '#ffeb3b',
+		            [
+		              'interpolate',
+		              ['linear'],
+		              ['coalesce', ['get', 'FLOOR'], ['get', 'floor'], 1],
+		              1, '#c5e1a5',  // Light green for low density
+		              5, '#7cb342',  // Medium green
+		              10, '#33691e', // Dark green for high density
+		              20, '#1b5e20'  // Very dark green for very high density
+		            ]
+		          ]);
+		          
+		          // Update legend for density mode
+		          modeLegend.innerHTML = `
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#c5e1a5"></div>Low Density
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#7cb342"></div>Medium Density
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#33691e"></div>High Density
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#1b5e20"></div>Very High Density
+		            </div>
+		          `;
+		          modeLegend.style.display = 'block';
+		        }
+		        else if (mode === 'height') {
+		          // Height-based coloring
+		          map.setPaintProperty('hdb-3d', 'fill-extrusion-color', [
+		            'case',
+		            ['boolean', ['feature-state','hover'], false],
+		            '#ffeb3b',
+		            [
+		              'interpolate',
+		              ['linear'],
+		              ['coalesce', ['get', 'FLOOR'], ['get', 'floor'], 1],
+		              1,  '#e0f7fa',  // Light cyan for low
+		              10, '#80deea',  // Medium cyan
+		              20, '#26c6da',  // Cyan
+		              30, '#0097a7',  // Dark cyan
+		              40, '#006064'   // Very dark cyan
+		            ]
+		          ]);
+		          
+		          // Update legend for height mode
+		          modeLegend.innerHTML = `
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#e0f7fa"></div>1-10 Floors
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#80deea"></div>10-20 Floors
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#26c6da"></div>20-30 Floors
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#0097a7"></div>30-40 Floors
+		            </div>
+		            <div class="legend-item">
+		              <div class="legend-color" style="background:#006064"></div>40+ Floors
+		            </div>
+		          `;
+		          modeLegend.style.display = 'block';
+		        }
+		        
+		        // Toggle legend visibility
+		        document.getElementById('legend').classList.remove('collapsed');
+		      }
+		      
+		      // FIXED: Improved auto-hide function
+		      function resetHideTimer() {
+		        // Clear existing timer
+		        clearTimeout(hideTimeout);
+		        
+		        // Set new timer (50 seconds)
+		        hideTimeout = setTimeout(() => {
+		          // Only hide panels if user didn't manually toggle them
+		          if (!userManuallyToggled) {
+		            const controlPanel = document.getElementById('control-panel');
+		            const legend = document.getElementById('legend');
+		            
+		            if (controlPanel && !controlPanel.classList.contains('collapsed')) {
+		              controlPanel.classList.add('collapsed');
+		            }
+		            if (legend && !legend.classList.contains('collapsed')) {
+		              legend.classList.add('collapsed');
+		            }
+		          }
+		        }, 50000); // 50 seconds
+		      }
+		
+		      document.head.appendChild(styleElement);
+		      
+		      // Setup user activity listeners
+		      document.addEventListener('mousemove', resetHideTimer);
+		      document.addEventListener('click', resetHideTimer);
+		      document.addEventListener('keydown', resetHideTimer);
+		      
+		      // Start the auto-hide timer
+		      resetHideTimer();
+		      
+		    } catch (err) {
+		      console.error('General map error:', err);
 		    }
 		  });
-		  console.log('Singapore boundary loaded successfully');
-		} catch (err) {
-		  console.warn('Error loading Singapore boundary:', err);
-		  // Continue anyway - this isn't critical for tooltips
-		}
-		
-		// 2) Load HDB GeoJSON with better error handling
-		let hdbData;
-		try {
-		  const resp = await fetch('https://raw.githubusercontent.com/carionb/Local/main/HDB_description_floor_year.geojson');
-		
-		  if (!resp.ok) {
-		    throw new Error(`Failed to load HDB data: ${resp.status}`);
-		  }
-		  hdbData = await resp.json();
-		  console.log('HDB data loaded successfully');
-		} catch (err) {
-		  console.warn('Error loading HDB data:', err);
-		  // Fallback to test data so tooltip can be demonstrated
-		  console.log('Using fallback test HDB data');
-		  hdbData = {
-		    "type": "FeatureCollection",
-		    "features": [
-		      {
-		        "type": "Feature",
-		        "properties": {
-		          "FLOOR": 12,
-		          "YEAR": 1985,
-		          "descriptio": "<table><tr><th>BLK_NO</th><td>123</td></tr><tr><th>STREET</th><td>Clementi Road</td></tr></table>"
-		        },
-		        "geometry": {
-		          "type": "Polygon",
-		          "coordinates": [[[103.8, 1.35], [103.81, 1.35], [103.81, 1.36], [103.8, 1.36], [103.8, 1.35]]]
-		        }
-		      },
-		      {
-		        "type": "Feature",
-		        "properties": {
-		          "floor": 25,
-		          "year": 2005,
-		          "descriptio": "<table><tr><th>Blk_No</th><td>456</td></tr><tr><th>Street</th><td>Orchard Road</td></tr></table>"
-		        },
-		        "geometry": {
-		          "type": "Polygon",
-		          "coordinates": [[[103.82, 1.37], [103.83, 1.37], [103.83, 1.38], [103.82, 1.38], [103.82, 1.37]]]
-		        }
-		      }
-		    ]
-		  };
-		}
-		
-		// Now add the HDB data to the map
-		map.addSource('hdb', {
-		  type: 'geojson',
-		  data: hdbData,
-		  generateId: true
-		});
-		
-		// 3) Year slider setup with error handling
-		const years = hdbData.features
-		  .map(f => f.properties.YEAR || f.properties.year)
-		  .filter(y => y && y >= 1950 && y <= 2024); 
-		
-		const minY = years.length > 0 ? Math.min(...years) : 1950;
-		const maxY = years.length > 0 ? Math.max(...years) : 2024;
-		
-		const slider = document.getElementById('year-slider');
-		const label = document.getElementById('year-value');
-		slider.min = minY; 
-		slider.max = maxY; 
-		slider.value = maxY;
-		label.textContent = maxY;
-		
-		// 4) Single extrusion layer with color expression for hover
-		map.addLayer({
-		  id: 'hdb-3d',
-		  type: 'fill-extrusion',
-		  source: 'hdb',
-		  paint: {
-		    // if hovered → yellow, else grey
-		    'fill-extrusion-color': [
-		      'case',
-		      ['boolean', ['feature-state','hover'], false],
-		      '#ffeb3b',
-		      '#cccccc'
-		    ],
-		    'fill-extrusion-height': ['*',
-		      ['coalesce', ['get','FLOOR'], ['get','floor'], 1], 3
-		    ],
-		    'fill-extrusion-opacity': 0.85,
-		    'fill-extrusion-vertical-gradient': true
-		  }
-		});
-		
-		function parseDesc(html) {
-		  if (!html) return { block: 'N/A', street: 'N/A' };
-		  
-		  try {
-		const parser = new DOMParser();
-		const doc = parser.parseFromString(decodeEntities(html), 'text/html');
-		const rows = doc.querySelectorAll('tr');
-		const data = {};
-		
-		rows.forEach(row => {
-		  const th = row.querySelector('th')?.textContent?.trim().toLowerCase();
-		  const td = row.querySelector('td')?.textContent?.trim();
-		  if (th && td) {
-		    if (th.includes('blk')) data.block = td;
-		    if (th.includes('street')) data.street = td;
-		  }
-		});
-		
-		return {
-		  block: data.block || 'N/A',
-		  street: data.street || 'N/A'
-		};
-		  } catch (e) {
-		console.warn('Error parsing description:', e);
-		return { block: 'Error', street: 'Error' };
-		  }
-		}
-		// Hover interaction with better error handling
-		
-		let hoveredId = null;
-		const buildingInfo = document.getElementById('building-info');
-		
-		map.on('mousemove', 'hdb-3d', (e) => {
-		  try {
-		if (e.features.length === 0) return;
-		
-		if (hoveredId !== null) {
-		  map.setFeatureState({ source: 'hdb', id: hoveredId }, { hover: false });
-		}
-		
-		hoveredId = e.features[0].id;
-		map.setFeatureState({ source: 'hdb', id: hoveredId }, { hover: true });
-		
-		const p = e.features[0].properties;
-		
-		// fix 
-		const desc = parseDesc(p.descriptio || p.description || '');
-		const year = p.YEAR || p.year || 'N/A';
-		const floors = p.FLOOR || p.floor || 'N/A';
-		
-		buildingInfo.innerHTML = `
-		  <div class="building-info-row">
-		    <div class="building-info-label">Block</div>
-		    <div class="building-info-value">${desc.block}</div> 
-		  </div>
-		  <div class="building-info-row">
-		    <div class="building-info-label">Street</div>
-		    <div class="building-info-value">${desc.street}</div>
-		  </div>
-		  <div class="building-info-row">
-		    <div class="building-info-label">Year</div>
-		    <div class="building-info-value">${year}</div>
-		  </div>
-		  <div class="building-info-row">
-		    <div class="building-info-label">Floors</div>
-		    <div class="building-info-value">${floors}</div>
-		  </div>
-		`;
-		
-		  } catch (err) {
-		console.error('Error in mousemove handler:', err);
-		
-		buildingInfo.innerHTML = `
-		  <div class="no-building-selected">
-		    Information currently unavailable
-		  </div>
-		`;
-		  }
-		});
-		
-		map.on('mouseleave', 'hdb-3d', () => {
-		  try {
-		if (hoveredId !== null) {
-		  map.setFeatureState({ source: 'hdb', id: hoveredId }, { hover: false });
-		}
-		hoveredId = null;
-		buildingInfo.innerHTML = `
-		  <div class="no-building-selected">
-		    Hover over a building to see details
-		  </div>
-		`;
-		  } catch (err) {
-		console.error('Error in mouseleave handler:', err);
-		  }
-		});
-		
-		// 6) Year filter
-		slider.oninput = e => {
-		  try {
-		    const y = +e.target.value;
-		    label.textContent = y;
-		    map.setFilter('hdb-3d', [
-		      '<=', ['coalesce', ['get', 'YEAR'], ['get', 'year'], 0], y
-		    ]);
-		  } catch (err) {
-		    console.error('Error in slider handler:', err);
-		  }
-		};
-		
-		// 7) Remote-control actions remain the same
-		function ease(opts) { 
-		  map.easeTo(Object.assign({ duration: 500 }, opts)); 
-		}
-		
-		document.getElementById('tilt-up').onclick = () => {
-		  currentPitch = Math.min(85, currentPitch + pitchStep);
-		  ease({ pitch: currentPitch });
-		};
-		document.getElementById('tilt-down').onclick = () => {
-		  currentPitch = Math.max(0, currentPitch - pitchStep);
-		  ease({ pitch: currentPitch });
-		};
-		document.getElementById('reset-view').onclick = () => {
-		  currentPitch = initialPitch;
-		  ease({
-		    center: initialCenter,
-		    zoom: initialZoom,
-		    pitch: initialPitch,
-		    bearing: initialBearing
-		  });
-		};
-		document.getElementById('rotate-right').onclick = () => {
-		  ease({ bearing: map.getBearing() - bearingStep });
-		};
-		document.getElementById('rotate-left').onclick = () => {
-		  ease({ bearing: map.getBearing() + bearingStep });
-		};
-		
-		console.log('Map initialization complete');
-		  } catch (err) {
-		console.error('Fatal error in map initialization:', err);
-		  }
-		});    
 		});
 		
 		// Population dashboard logic
