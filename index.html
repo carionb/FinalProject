@@ -898,6 +898,7 @@
 		  map.on('load', async () => {
 		    document.getElementById('map').addEventListener('wheel', e => e.stopPropagation());
 		    document.getElementById('map').addEventListener('touchmove', e => e.stopPropagation());
+	            userManuallyToggled = true;
 		    
 		    // Call the panel toggle setup function
 		    setupPanelToggles();
