@@ -1299,37 +1299,29 @@
 		        
 		        // Update building colors based on mode
 		        if (mode === 'chronological') {
-		          map.setPaintProperty('hdb-3d', 'fill-extrusion-color', [
-		            'case',
-		            ['boolean', ['feature-state','hover'], false],
-		            '#ffeb3b',
-		            [
-		              'interpolate',
-		              ['linear'],
-		              ['coalesce', ['get', 'YEAR'], ['get', 'year'], 1960],
-		              1960, '#1a237e', // Dark blue for oldest
-		              1980, '#7e57c2', // Purple for middle
-		              2000, '#26a69a', // Teal for newer
-		              2020, '#ffc107'  // Yellow for newest
-		            ]
-		          ]);
+		          map.setPaintProperty('hdb-3d', 'fill-extrusion-color', 
+					       [ 'case', ['boolean', ['feature-state','hover'], false], '#ffeb3b', ['interpolate', ['linear'], 
+					       ['coalesce', ['get','YEAR'], ['get','year'], 1960], 
+						1960, '#440154', // 
+						1970, '#443982', // 
+						1980, '#30678d', // 
+						1990, '#20908c', // 
+						2000, '#35b778', // 
+						2010, '#90d643', // 
+						2020, '#fde724' 
+			] ]);
 		          
-		          // Update legend
+		          // legend
 		          modeLegend.innerHTML = `
-		            <div class="legend-item">
-		              <div class="legend-color" style="background:#1a237e"></div>1960s
-		            </div>
-		            <div class="legend-item">
-		              <div class="legend-color" style="background:#7e57c2"></div>1980s
-		            </div>
-		            <div class="legend-item">
-		              <div class="legend-color" style="background:#26a69a"></div>2000s
-		            </div>
-		            <div class="legend-item">
-		              <div class="legend-color" style="background:#ffc107"></div>2020s
-		            </div>
-		          `;
-		          modeLegend.style.display = 'block';
+      <div class="legend-item"><div class="legend-color" style="background:#440154"></div>1960s</div>
+      <div class="legend-item"><div class="legend-color" style="background:#443982"></div>1970s</div>
+      <div class="legend-item"><div class="legend-color" style="background:#30678d"></div>1980s</div>
+     <div class="legend-item"><div class="legend-color" style="background:#20908c"></div>1990s</div>
+      <div class="legend-item"><div class="legend-color" style="background:#35b778"></div>2000s</div>
+      <div class="legend-item"><div class="legend-color" style="background:#90d643"></div>2010s</div>
+      <div class="legend-item"><div class="legend-color" style="background:#fde724"></div>2020s</div>
+   `;
+     modeLegend.style.display = 'block';
 		        } 
 		        else if (mode === 'density') {
 		          // Use building proximity/density
